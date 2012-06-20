@@ -12,8 +12,8 @@ export Conn;
 /*-------------------------------------------------------------------------
 *
 * libpq-fe.h
-*	  This file contains definitions for structures and
-*	  externs for functions used by frontend postgres applications.
+*     This file contains definitions for structures and
+*     externs for functions used by frontend postgres applications.
 *
 * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
 * Portions Copyright (c) 1994, Regents of the University of California
@@ -30,77 +30,77 @@ export Conn;
 */
 
 // #define PG_COPYRES_ATTRS           0x01;
-// #define PG_COPYRES_TUPLES		  0x02	/* Implies PG_COPYRES_ATTRS */
-// #define PG_COPYRES_EVENTS		  0x04
-// #define PG_COPYRES_NOTICEHOOKS	  0x08
+// #define PG_COPYRES_TUPLES          0x02	/* Implies PG_COPYRES_ATTRS */
+// #define PG_COPYRES_EVENTS          0x04
+// #define PG_COPYRES_NOTICEHOOKS     0x08
 
 
 // --------------------------------------------------------------------------
 // Application-visible enum types */
 
 enum ConnStatusType {
-    CONNECTION_OK,  
-	CONNECTION_BAD,
+    CONNECTION_OK,
+    CONNECTION_BAD,
 
-	// The existence of these should never be relied upon - they should only
-	// be used for user feedback or similar purposes.
+    // The existence of these should never be relied upon - they should only
+    // be used for user feedback or similar purposes.
 
-	CONNECTION_STARTED,			/* Waiting for connection to be made.  */
-	CONNECTION_MADE,			/* Connection OK; waiting to send.	   */
-	CONNECTION_AWAITING_RESPONSE,		/* Waiting for a response from the
-	* postmaster.		  */
-	CONNECTION_AUTH_OK,			/* Received authentication; waiting for
-	* backend startup. */
-	CONNECTION_SETENV,			/* Negotiating environment. */
-	CONNECTION_SSL_STARTUP,		/* Negotiating SSL. */
-	CONNECTION_NEEDED,			/* Internal state: connect() needed */
+    CONNECTION_STARTED,			/* Waiting for connection to be made.  */
+    CONNECTION_MADE,			/* Connection OK; waiting to send.     */
+    CONNECTION_AWAITING_RESPONSE,		/* Waiting for a response from the
+    * postmaster.         */
+    CONNECTION_AUTH_OK,			/* Received authentication; waiting for
+    * backend startup. */
+    CONNECTION_SETENV,			/* Negotiating environment. */
+    CONNECTION_SSL_STARTUP,		/* Negotiating SSL. */
+    CONNECTION_NEEDED,			/* Internal state: connect() needed */
 }
 
 enum PostgresPollingStatusType {
-	PGRES_POLLING_FAILED = 0,
-	PGRES_POLLING_READING,		/* These two indicate that one may	  */
-	PGRES_POLLING_WRITING,		/* use select before polling again.   */
-	PGRES_POLLING_OK,
-	PGRES_POLLING_ACTIVE		/* unused; keep for awhile for backwards
-	* compatibility */
-} 
+    PGRES_POLLING_FAILED = 0,
+    PGRES_POLLING_READING,		/* These two indicate that one may    */
+    PGRES_POLLING_WRITING,		/* use select before polling again.   */
+    PGRES_POLLING_OK,
+    PGRES_POLLING_ACTIVE		/* unused; keep for awhile for backwards
+    * compatibility */
+}
 
 enum ExecStatusType {
-	PGRES_EMPTY_QUERY = 0,		/* empty query string was executed */
-	PGRES_COMMAND_OK,			/* a query command that doesn't return
-	* anything was executed properly by the
-	* backend */
-	PGRES_TUPLES_OK,			/* a query command that returns tuples was
-	* executed properly by the backend, PGresult
-	* contains the result tuples */
-	PGRES_COPY_OUT,				// Copy Out data transfer in progress 
-	PGRES_COPY_IN,				// Copy In data transfer in progress 
-	PGRES_BAD_RESPONSE,			// an unexpected response was recv'd from the backend 
-	PGRES_NONFATAL_ERROR,		// notice or warning message 
-	PGRES_FATAL_ERROR,			// query failed 
-	PGRES_COPY_BOTH				// Copy In/Out data transfer in progress 
-} 
+    PGRES_EMPTY_QUERY = 0,		/* empty query string was executed */
+    PGRES_COMMAND_OK,			/* a query command that doesn't return
+    * anything was executed properly by the
+    * backend */
+    PGRES_TUPLES_OK,			/* a query command that returns tuples was
+    * executed properly by the backend, PGresult
+    * contains the result tuples */
+    PGRES_COPY_OUT,				// Copy Out data transfer in progress
+    PGRES_COPY_IN,				// Copy In data transfer in progress
+    PGRES_BAD_RESPONSE,			// an unexpected response was recv'd from the backend
+    PGRES_NONFATAL_ERROR,		// notice or warning message
+    PGRES_FATAL_ERROR,			// query failed
+    PGRES_COPY_BOTH				// Copy In/Out data transfer in progress
+}
 
 enum PGTransactionStatusType {
-	PQTRANS_IDLE,				/* connection idle */
-	PQTRANS_ACTIVE,				/* command in progress */
-	PQTRANS_INTRANS,			/* idle, within transaction block */
-	PQTRANS_INERROR,			/* idle, within failed transaction */
-	PQTRANS_UNKNOWN				/* cannot determine status */
+    PQTRANS_IDLE,				/* connection idle */
+    PQTRANS_ACTIVE,				/* command in progress */
+    PQTRANS_INTRANS,			/* idle, within transaction block */
+    PQTRANS_INERROR,			/* idle, within failed transaction */
+    PQTRANS_UNKNOWN				/* cannot determine status */
 }
 
 enum PGVerbosity {
-	PQERRORS_TERSE,				/* singleline error messages */
-	PQERRORS_DEFAULT,			/* recommended style */
-	PQERRORS_VERBOSE			/* all the facts, ma'am */
+    PQERRORS_TERSE,				/* singleline error messages */
+    PQERRORS_DEFAULT,			/* recommended style */
+    PQERRORS_VERBOSE			/* all the facts, ma'am */
 }
 
 enum PGPing {
-	PQPING_OK,					/* server is accepting connections */
-	PQPING_REJECT,				/* server is alive but rejecting connections */
-	PQPING_NO_RESPONSE,			/* could not establish connection */
-	PQPING_NO_ATTEMPT			/* connection not attempted (bad params) */
-} 
+    PQPING_OK,					/* server is accepting connections */
+    PQPING_REJECT,				/* server is alive but rejecting connections */
+    PQPING_NO_RESPONSE,			/* could not establish connection */
+    PQPING_NO_ATTEMPT			/* connection not attempted (bad params) */
+}
 
 // /* PGconn encapsulates a connection to the backend.
 // * The contents of this struct are not supposed to be known to applications.
@@ -129,11 +129,11 @@ enum PGcancel {}
 
 // typedef struct pgNotify
 // {
-// 	char	   *relname;		/* notification condition name */
-// 	int			be_pid;			/* process ID of notifying server process */
-// 	char	   *extra;			/* notification parameter */
-// 	/* Fields below here are private to libpq; apps should not use 'em */
-// 	struct pgNotify *next;		/* list link */
+//  char       *relname;		/* notification condition name */
+//  int			be_pid;			/* process ID of notifying server process */
+//  char       *extra;			/* notification parameter */
+//  /* Fields below here are private to libpq; apps should not use 'em */
+//  struct pgNotify *next;		/* list link */
 // } PGnotify;
 
 enum PGnotify {}  // rhodesd> this might have to be built into a full declaration.
@@ -148,17 +148,17 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 
 // typedef struct _PQprintOpt
 // {
-// 	pqbool		header;			/* print output field headings and row count */
-// 	pqbool		align;			/* fill align the fields */
-// 	pqbool		standard;		/* old brain dead format */
-// 	pqbool		html3;			/* output html tables */
-// 	pqbool		expanded;		/* expand tables */
-// 	pqbool		pager;			/* use pager for output if needed */
-// 	char	   *fieldSep;		/* field separator */
-// 	char	   *tableOpt;		/* insert to HTML <table ...> */
-// 	char	   *caption;		/* HTML <caption> */
-// 	char	  **fieldName;		/* null terminated array of replacement field
-// 	* names */
+//  pqbool		header;			/* print output field headings and row count */
+//  pqbool		align;			/* fill align the fields */
+//  pqbool		standard;		/* old brain dead format */
+//  pqbool		html3;			/* output html tables */
+//  pqbool		expanded;		/* expand tables */
+//  pqbool		pager;			/* use pager for output if needed */
+//  char       *fieldSep;		/* field separator */
+//  char       *tableOpt;		/* insert to HTML <table ...> */
+//  char       *caption;		/* HTML <caption> */
+//  char      **fieldName;		/* null terminated array of replacement field
+//  * names */
 // } PQprintOpt;
 
 // /* ----------------
@@ -172,17 +172,17 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // */
 // typedef struct _PQconninfoOption
 // {
-// 	char	   *keyword;		/* The keyword of the option			*/
-// 	char	   *envvar;			/* Fallback environment variable name	*/
-// 	char	   *compiled;		/* Fallback compiled in default value	*/
-// 	char	   *val;			/* Option's current value, or NULL		 */
-// 	char	   *label;			/* Label for field in connect dialog	*/
-// 	char	   *dispchar;		/* Indicates how to display this field in a
-// 	* connect dialog. Values are: "" Display
-// 	* entered value as is "*" Password field -
-// 	* hide value "D"  Debug option - don't show
-// 	* by default */
-// 	int			dispsize;		/* Field size in characters for dialog	*/
+//  char       *keyword;		/* The keyword of the option			*/
+//  char       *envvar;			/* Fallback environment variable name	*/
+//  char       *compiled;		/* Fallback compiled in default value	*/
+//  char       *val;			/* Option's current value, or NULL       */
+//  char       *label;			/* Label for field in connect dialog	*/
+//  char       *dispchar;		/* Indicates how to display this field in a
+//  * connect dialog. Values are: "" Display
+//  * entered value as is "*" Password field -
+//  * hide value "D"  Debug option - don't show
+//  * by default */
+//  int			dispsize;		/* Field size in characters for dialog	*/
 // } PQconninfoOption;
 
 // /* ----------------
@@ -191,13 +191,13 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // */
 // typedef struct
 // {
-// 	int			len;
-// 	int			isint;
-// 	union
-// 	{
-// 		int		   *ptr;		/* can't use void (dec compiler barfs)	 */
-// 		int			integer;
-// 	}			u;
+//  int			len;
+//  int			isint;
+//  union
+//  {
+//      int        *ptr;		/* can't use void (dec compiler barfs)   */
+//      int			integer;
+//  }			u;
 // } PQArgBlock;
 
 // /* ----------------
@@ -206,13 +206,13 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // */
 // typedef struct pgresAttDesc
 // {
-// 	char	   *name;			/* column name */
-// 	Oid			tableid;		/* source table, if known */
-// 	int			columnid;		/* source column, if known */
-// 	int			format;			/* format code for value (text/binary) */
-// 	Oid			typid;			/* type id */
-// 	int			typlen;			/* type size */
-// 	int			atttypmod;		/* type-specific modifier info */
+//  char       *name;			/* column name */
+//  Oid			tableid;		/* source table, if known */
+//  int			columnid;		/* source column, if known */
+//  int			format;			/* format code for value (text/binary) */
+//  Oid			typid;			/* type id */
+//  int			typlen;			/* type size */
+//  int			atttypmod;		/* type-specific modifier info */
 // } PGresAttDesc;
 
 
@@ -220,20 +220,20 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // /* Asynchronous (non-blocking) */
 // extern PGconn *PQconnectStart(const char *conninfo);
 // extern PGconn *PQconnectStartParams(const char **keywords,
-// 					                const char **values, int expand_dbname);
+//                                  const char **values, int expand_dbname);
 // extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
 // /* Synchronous (blocking) */
 // extern PGconn *PQconnectdb(const char *conninfo);
 // extern PGconn *PQconnectdbParams(const char **keywords,
-// 				                 const char **values, int expand_dbname);
+//                               const char **values, int expand_dbname);
 // extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
-// 			                const char *pgoptions, const char *pgtty,
-// 			                const char *dbName,
-// 			                const char *login, const char *pwd);
+//                          const char *pgoptions, const char *pgtty,
+//                          const char *dbName,
+//                          const char *login, const char *pwd);
 
 // #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
-// 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
+//  PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
 //     /* close the current connection and free the PGconn data structure */
 //     extern void PQfinish(PGconn *conn);
@@ -289,18 +289,18 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 
 // /* Override default notice handling routines */
 // extern PQnoticeReceiver PQsetNoticeReceiver(PGconn *conn,
-// 					                        PQnoticeReceiver proc,
-// 					                        void *arg);
+//                                          PQnoticeReceiver proc,
+//                                          void *arg);
 // extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
-// 					                          PQnoticeProcessor proc,
-// 					                          void *arg);
+//                                            PQnoticeProcessor proc,
+//                                            void *arg);
 
 // /*
-// *	   Used to set callback that prevents concurrent access to
-// *	   non-thread safe functions that libpq needs.
-// *	   The default implementation uses a libpq internal mutex.
-// *	   Only required for multithreaded apps that use kerberos
-// *	   both within their app and for postgresql connections.
+// *       Used to set callback that prevents concurrent access to
+// *       non-thread safe functions that libpq needs.
+// *       The default implementation uses a libpq internal mutex.
+// *       Only required for multithreaded apps that use kerberos
+// *       both within their app and for postgresql connections.
 // */
 // typedef void (*pgthreadlock_t) (int acquire);
 
@@ -312,23 +312,23 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // /* Interface for multiple-result or asynchronous queries */
 // extern int	PQsendQuery(PGconn *conn, const char *query);
 // extern int PQsendQueryParams(PGconn *conn,
-// 				             const char *command,
-// 				             int nParams,
-// 				             const Oid *paramTypes,
-// 				             const char *const * paramValues,
-// 				             const int *paramLengths,
-// 				             const int *paramFormats,
-// 				             int resultFormat);
+//                           const char *command,
+//                           int nParams,
+//                           const Oid *paramTypes,
+//                           const char *const * paramValues,
+//                           const int *paramLengths,
+//                           const int *paramFormats,
+//                           int resultFormat);
 // extern int PQsendPrepare(PGconn *conn, const char *stmtName,
-// 			             const char *query, int nParams,
-// 			             const Oid *paramTypes);
+//                       const char *query, int nParams,
+//                       const Oid *paramTypes);
 // extern int PQsendQueryPrepared(PGconn *conn,
-// 					           const char *stmtName,
-// 					           int nParams,
-// 					           const char *const * paramValues,
-// 					           const int *paramLengths,
-// 					           const int *paramFormats,
-// 					           int resultFormat);
+//                             const char *stmtName,
+//                             int nParams,
+//                             const char *const * paramValues,
+//                             const int *paramLengths,
+//                             const int *paramFormats,
+//                             int resultFormat);
 // extern PGresult *PQgetResult(PGconn *conn);
 
 // /* Routines for managing an asynchronous query */
@@ -356,7 +356,7 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // extern int	PQisthreadsafe(void);
 // extern PGPing PQping(const char *conninfo);
 // extern PGPing PQpingParams(const char **keywords,
-// 			               const char **values, int expand_dbname);
+//                         const char **values, int expand_dbname);
 
 // /* Force the write buffer to be written (or at least try) */
 // extern int	PQflush(PGconn *conn);
@@ -366,12 +366,12 @@ enum PGnotify {}  // rhodesd> this might have to be built into a full declaratio
 // * use
 // */
 // extern PGresult *PQfn(PGconn *conn,
-// 	                  int fnid,
-// 	                  int *result_buf,
-// 	                  int *result_len,
-// 	                  int result_is_int,
-// 	                  const PQArgBlock *args,
-// 	                  int nargs);
+//                    int fnid,
+//                    int *result_buf,
+//                    int *result_len,
+//                    int result_is_int,
+//                    const PQArgBlock *args,
+//                    int nargs);
 enum Oid {}
 
 // BOOKMARK
@@ -405,20 +405,20 @@ enum Oid {}
 
 // /* Quoting strings before inclusion in queries. */
 // extern size_t PQescapeStringConn(PGconn *conn,
-// 				                 char *to, const char *from, size_t length,
-// 				                 int *error);
+//                               char *to, const char *from, size_t length,
+//                               int *error);
 // extern char *PQescapeLiteral(PGconn *conn, const char *str, size_t len);
 // extern char *PQescapeIdentifier(PGconn *conn, const char *str, size_t len);
 // extern unsigned char *PQescapeByteaConn(PGconn *conn,
-// 				                        const unsigned char *from, size_t from_length,
-// 				                        size_t *to_length);
+//                                      const unsigned char *from, size_t from_length,
+//                                      size_t *to_length);
 // extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
-// 				                      size_t *retbuflen);
+//                                    size_t *retbuflen);
 
 // /* These forms are deprecated! */
 // extern size_t PQescapeString(char *to, const char *from, size_t length);
 // extern unsigned char *PQescapeBytea(const unsigned char *from, size_t from_length,
-// 			                        size_t *to_length);
+//                                  size_t *to_length);
 
 
 
@@ -426,26 +426,26 @@ enum Oid {}
 
 // extern void
 //     PQprint(FILE *fout,				/* output stream */
-// 		    const PGresult *res,
-// 		    const PQprintOpt *ps);	/* option structure */
+//          const PGresult *res,
+//          const PQprintOpt *ps);	/* option structure */
 
 // /*
 // * really old printing routines
 // */
 // extern void
 //     PQdisplayTuples(const PGresult *res,
-// 				    FILE *fp,		/* where to send the output */
-// 				    int fillAlign,	/* pad the fields with spaces */
-// 				    const char *fieldSep,	/* field separator */
-// 				    int printHeader,	/* display headers? */
-// 				    int quiet);
+//                  FILE *fp,		/* where to send the output */
+//                  int fillAlign,	/* pad the fields with spaces */
+//                  const char *fieldSep,	/* field separator */
+//                  int printHeader,	/* display headers? */
+//                  int quiet);
 
 // extern void
 //     PQprintTuples(const PGresult *res,
-// 			      FILE *fout,		/* output stream */
-// 			      int printAttName, /* print attribute names */
-// 			      int terseOutput,	/* delimiter bars */
-// 			      int width);		/* width of column, if 0, use variable width */
+//                FILE *fout,		/* output stream */
+//                int printAttName, /* print attribute names */
+//                int terseOutput,	/* delimiter bars */
+//                int width);		/* width of column, if 0, use variable width */
 
 
 
@@ -455,36 +455,36 @@ enum Oid {}
 //     #endif   /* LIBPQ_FE_H */
 
 
-native mod pq {    
+native mod pq {
     /* ----------------
     * Exported functions of libpq
     * ----------------
     */
-    
+
     /* ===	in fe-connect.c === */
 
     // ---------------------------------------------------------------------
-    // make a new client connection to the backend 
-    // Asynchronous (non-blocking) 
+    // make a new client connection to the backend
+    // Asynchronous (non-blocking)
 
     // extern PGconn *PQconnectStart(const char *conninfo);
-    fn PQconnectStart(conninfo: *c_char) -> *PGconn; 
+    fn PQconnectStart(conninfo: *c_char) -> *PGconn;
 
     // extern PGconn *PQconnectStartParams(const char **keywords,
-	// 				                    const char **values, int expand_dbname);
+    //                                  const char **values, int expand_dbname);
     // extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
 
     // /* Synchronous (blocking) */
     fn PQconnectdb(conninfo: *c_char) -> *PGconn;
     // extern PGconn *PQconnectdbParams(const char **keywords,
-	// 			                     const char **values, int expand_dbname);
+    //                               const char **values, int expand_dbname);
     // extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
-	// 		                    const char *pgoptions, const char *pgtty,
-	// 		                    const char *dbName,
-	// 		                    const char *login, const char *pwd);
+    //                          const char *pgoptions, const char *pgtty,
+    //                          const char *dbName,
+    //                          const char *login, const char *pwd);
 
     // #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
-	//     PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
+    //     PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
     //     /* close the current connection and free the PGconn data structure */
     //     extern void PQfinish(PGconn *conn);
@@ -509,10 +509,10 @@ native mod pq {
     fn PQresetStart(conn: *PGconn) -> c_int;
 
     // extern PostgresPollingStatusType PQresetPoll(PGconn *conn);
-    fn PQresetPoll(conn: *PGconn) -> PostgresPollingStatusType;   
+    fn PQresetPoll(conn: *PGconn) -> PostgresPollingStatusType;
 
     // ---------------------------------------------------------------------
-    // Synchronous (blocking) 
+    // Synchronous (blocking)
 
     // extern void PQreset(PGconn *conn);
     fn PQreset(conn: *PGconn) -> (); // assume () is the same as void
@@ -564,10 +564,10 @@ native mod pq {
     fn PQtransactionStatus(conn: *PGconn) -> PGTransactionStatusType;
 
     // extern const char *PQparameterStatus(const PGconn *conn,
-	// 			                         const char *paramName);
+    //                                   const char *paramName);
     fn  PQparameterStatus(conn: *PGconn,
-	                      paramName: *c_char) -> *c_char;
-    
+                          paramName: *c_char) -> *c_char;
+
     // extern int	PQprotocolVersion(const PGconn *conn);
     fn PQprotocolVersion(conn: *PGconn) -> c_int;
     fn PQserverVersion(conn: *PGconn) -> c_int;
@@ -608,46 +608,46 @@ native mod pq {
     fn PQresultErrorField(res: *PGresult,  fieldcode: c_int) -> *c_char;
 
     // extern int	PQntuples(const PGresult *res);
-	fn PQntuples(res: *PGresult) -> c_int;
+    fn PQntuples(res: *PGresult) -> c_int;
 
     // extern int	PQnfields(const PGresult *res);
-	fn PQnfields(res: *PGresult) -> c_int;
+    fn PQnfields(res: *PGresult) -> c_int;
 
     // extern int	PQbinaryTuples(const PGresult *res);
-	fn PQbinaryTuples(res: *PGresult) -> c_int;
+    fn PQbinaryTuples(res: *PGresult) -> c_int;
 
     // extern char *PQfname(const PGresult *res, int field_num);
     fn PQfname(res: *PGresult, field_num: c_int ) -> *c_char;
 
     // extern int	PQfnumber(const PGresult *res, const char *field_name);
-	fn PQfnumber(res: *PGresult, field_name: *c_char) -> c_int;
+    fn PQfnumber(res: *PGresult, field_name: *c_char) -> c_int;
 
     // extern Oid	PQftable(const PGresult *res, int field_num);
-	fn PQftable(res: *PGresult, field_num: c_int) -> Oid;
+    fn PQftable(res: *PGresult, field_num: c_int) -> Oid;
 
     // extern int	PQftablecol(const PGresult *res, int field_num);
-	fn PQftablecol(res: *PGresult, field_num: c_int) -> c_int;
+    fn PQftablecol(res: *PGresult, field_num: c_int) -> c_int;
 
     // extern int	PQfformat(const PGresult *res, int field_num);
-	fn PQfformat(res: *PGresult, field_num: c_int) -> c_int;
+    fn PQfformat(res: *PGresult, field_num: c_int) -> c_int;
 
     // extern Oid	PQftype(const PGresult *res, int field_num);
-	fn PQftype(res: *PGresult, field_num: c_int) -> Oid;
+    fn PQftype(res: *PGresult, field_num: c_int) -> Oid;
 
     // extern int	PQfsize(const PGresult *res, int field_num);
-	fn PQfsize(res: *PGresult, field_num: c_int) -> c_int;
+    fn PQfsize(res: *PGresult, field_num: c_int) -> c_int;
 
     // extern int	PQfmod(const PGresult *res, int field_num);
-	fn PQfmod(res: *PGresult, field_num: c_int) -> c_int;
+    fn PQfmod(res: *PGresult, field_num: c_int) -> c_int;
 
     // extern char *PQcmdStatus(PGresult *res);
     fn PQcmdStatus(res: *PGresult) -> *c_char;
 
     // extern char *PQoidStatus(const PGresult *res);	/* old and ugly */
-    fn PQoidStatus(res: *PGresult) -> *c_char; // old and ugly 
+    fn PQoidStatus(res: *PGresult) -> *c_char; // old and ugly
 
     // extern Oid	PQoidValue(const PGresult *res);	/* new and improved */
-	fn PQoidValue(res: *PGresult) -> Oid;	// new and improved 
+    fn PQoidValue(res: *PGresult) -> Oid;	// new and improved
 
     // extern char *PQcmdTuples(PGresult *res);
     fn PQcmdTuples(res: *PGresult) -> *c_char;
@@ -656,18 +656,18 @@ native mod pq {
     fn PQgetvalue(res: *PGresult,  tup_num: c_int, field_num: c_int) -> *c_char;
 
     // extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
-	fn PQgetlength(res: *PGresult, tup_num: c_int, field_num: c_int) -> c_int;
+    fn PQgetlength(res: *PGresult, tup_num: c_int, field_num: c_int) -> c_int;
 
     // extern int	PQgetisnull(const PGresult *res, int tup_num, int field_num);
-	fn PQgetisnull(res: *PGresult, tup_num: c_int, field_num: c_int) -> c_int;
+    fn PQgetisnull(res: *PGresult, tup_num: c_int, field_num: c_int) -> c_int;
 
-	fn PQnparams(res: *PGresult) -> c_int;
+    fn PQnparams(res: *PGresult) -> c_int;
 
     // extern Oid	PQparamtype(const PGresult *res, int param_num);
-	fn PQparamtype(res: *PGresult,  param_num: c_int) -> Oid;
+    fn PQparamtype(res: *PGresult,  param_num: c_int) -> Oid;
 
     // ---------------------------------------------------------------------
-    // Large-object access routines 
+    // Large-object access routines
     // /* === in fe-lobj.c === */
 
     // extern int	lo_open(PGconn *conn, Oid lobjId, int mode);
@@ -718,46 +718,46 @@ native mod pq {
     fn PQexec(conn: *PGconn, query: *c_char) -> *PGresult;
 
     // extern PGresult *PQexecParams(PGconn *conn,
-    // 			                  const char *command,
-    // 			                  int nParams,
-    // 			                  const Oid *paramTypes,
-    // 			                  const char *const * paramValues,
-    // 			                  const int *paramLengths,
-    // 			                  const int *paramFormats,
-    // 			                  int resultFormat);
+    //                            const char *command,
+    //                            int nParams,
+    //                            const Oid *paramTypes,
+    //                            const char *const * paramValues,
+    //                            const int *paramLengths,
+    //                            const int *paramFormats,
+    //                            int resultFormat);
     fn PQexecParams(conn: *PGconn,
-    			    command: *c_char,
-    			    nParams: c_int,
-    			    paramTypes: *Oid,
-    			    paramValues: *c_char,
-    			    paramLengths: *c_int,
-    			    paramFormats: *c_int,
-    			    resultFormat: c_int) -> *PGresult;
+                    command: *c_char,
+                    nParams: c_int,
+                    paramTypes: *Oid,
+                    paramValues: *c_char,
+                    paramLengths: *c_int,
+                    paramFormats: *c_int,
+                    resultFormat: c_int) -> *PGresult;
 
     // extern PGresult *PQprepare(PGconn *conn, const char *stmtName,
-    // 		                   const char *query, int nParams,
-    // 		                   const Oid *paramTypes);
-    fn PQprepare(conn: *PGconn, 
+    //                         const char *query, int nParams,
+    //                         const Oid *paramTypes);
+    fn PQprepare(conn: *PGconn,
                  stmtName: *c_char,
-    		     query: *char, 
+                 query: *char,
                  nParams: c_int,
-    		     paramTypes: *Oid) -> *PGresult;
-        
+                 paramTypes: *Oid) -> *PGresult;
+
 
     // extern PGresult *PQexecPrepared(PGconn *conn,
-    // 			                    const char *stmtName,
-    // 			                    int nParams,
-    // 			                    const char *const * paramValues,
-    // 			                    const int *paramLengths,
-    // 			                    const int *paramFormats,
-    // 			                    int resultFormat);
+    //                              const char *stmtName,
+    //                              int nParams,
+    //                              const char *const * paramValues,
+    //                              const int *paramLengths,
+    //                              const int *paramFormats,
+    //                              int resultFormat);
     fn PQexecPrepared(conn: *PGconn,
-    			      stmtName: *char,
-    			      nParams: c_int,
-    			      paramValues: **c_char, // assuming (const char *const *)=>(**c_char)
-    			      paramLengths: *c_int,
-    			      paramFormats: *c_int,
-    			      resultFormat: c_int) -> *PGresult;
+                      stmtName: *char,
+                      nParams: c_int,
+                      paramValues: **c_char, // assuming (const char *const *)=>(**c_char)
+                      paramLengths: *c_int,
+                      paramFormats: *c_int,
+                      resultFormat: c_int) -> *PGresult;
 
     // ---------------------------------------------------------------------
     // === in fe-misc.c === */
@@ -787,7 +787,7 @@ native mod pq {
 class Conn {
     priv {
         let connstr: str;
-        let conn: *PGconn;        
+        let conn: *PGconn;
     }
 
     new(connstr: str) {
@@ -795,29 +795,29 @@ class Conn {
         self.conn = str::as_c_str(connstr, pq::PQconnectdb);
     }
 
-    // ------------------------------------------------------------------    
+    // ------------------------------------------------------------------
     fn Status() -> str {
         ret alt pq::PQstatus(self.conn) {
-	      CONNECTION_OK { "CONNECTION_OK" }
-	      CONNECTION_BAD { "CONNECTION_BAD" }
-	      CONNECTION_STARTED { "CONNECTION_STARTED" }
-	      CONNECTION_MADE { "CONNECTION_MADE		" }
-	      CONNECTION_AWAITING_RESPONSE { "CONNECTION_AWAITING_RESPONSE" }
-	      CONNECTION_AUTH_OK { "CONNECTION_AUTH_OK" }
-	      CONNECTION_SETENV { "CONNECTION_SETENV" }
-	      CONNECTION_SSL_STARTUP { "CONNECTION_SSL_STARTUP" }
-	      CONNECTION_NEEDED	 { "CONNECTION_NEEDED" }
+          CONNECTION_OK { "CONNECTION_OK" }
+          CONNECTION_BAD { "CONNECTION_BAD" }
+          CONNECTION_STARTED { "CONNECTION_STARTED" }
+          CONNECTION_MADE { "CONNECTION_MADE		" }
+          CONNECTION_AWAITING_RESPONSE { "CONNECTION_AWAITING_RESPONSE" }
+          CONNECTION_AUTH_OK { "CONNECTION_AUTH_OK" }
+          CONNECTION_SETENV { "CONNECTION_SETENV" }
+          CONNECTION_SSL_STARTUP { "CONNECTION_SSL_STARTUP" }
+          CONNECTION_NEEDED  { "CONNECTION_NEEDED" }
         }
     }
 
     fn ResetStart() -> int {
         ret pq::PQresetStart(self.conn) as int;
     }
-    
+
     fn LibVersion() -> int {
         pq::PQlibVersion() as int
     }
-    
+
     fn ServerVersion() -> int {
         pq::PQserverVersion(self.conn) as int
     }
@@ -860,7 +860,7 @@ class Conn {
 
 // ------------------------------------------------------------------
 // #[test]
-fn Connect() -> Conn {   
+fn Connect() -> Conn {
     let connstr = "host=localhost \
                    port=5432 \
                    user=rustuser \
@@ -897,16 +897,16 @@ class Result {
 
     fn StatusAsStr() -> str {
         alt self.Status() {
-	      PGRES_EMPTY_QUERY {"PGRES_EMPTY_QUERY"}
-	      PGRES_COMMAND_OK {"PGRES_COMMAND_OK"}
-	      PGRES_TUPLES_OK {"PGRES_TUPLES_OK"}
-	      PGRES_COPY_OUT {"PGRES_COPY_OUT"}
-	      PGRES_COPY_IN {"PGRES_COPY_IN"}
-	      PGRES_BAD_RESPONSE {"PGRES_BAD_RESPONSE"}
-	      PGRES_NONFATAL_ERROR {"PGRES_NONFATAL_ERROR"}
-	      PGRES_FATAL_ERROR {"PGRES_FATAL_ERROR"}
+          PGRES_EMPTY_QUERY {"PGRES_EMPTY_QUERY"}
+          PGRES_COMMAND_OK {"PGRES_COMMAND_OK"}
+          PGRES_TUPLES_OK {"PGRES_TUPLES_OK"}
+          PGRES_COPY_OUT {"PGRES_COPY_OUT"}
+          PGRES_COPY_IN {"PGRES_COPY_IN"}
+          PGRES_BAD_RESPONSE {"PGRES_BAD_RESPONSE"}
+          PGRES_NONFATAL_ERROR {"PGRES_NONFATAL_ERROR"}
+          PGRES_FATAL_ERROR {"PGRES_FATAL_ERROR"}
           PGRES_COPY_BOTH {"PGRES_COPY_BOTH"}
-        } 
+        }
     }
 
     // fn PQresStatus(status: ExecStatusType) -> c_char {
@@ -919,15 +919,15 @@ class Result {
     // fn PQresultErrorField(res: *PGresult,  fieldcode: c_int) -> c_char {
     //     // extern char *PQresultErrorField(const PGresult *res, int fieldcode);
     // }
-	fn Ntuples() -> int {
+    fn Ntuples() -> int {
         pq::PQntuples(self.res) as int
     }
 
-	fn Nfields() -> int {
+    fn Nfields() -> int {
         pq::PQnfields(self.res) as int
     }
 
-	fn BinaryTuples() -> int {
+    fn BinaryTuples() -> int {
         pq::PQbinaryTuples(self.res) as int
     }
 
@@ -935,29 +935,29 @@ class Result {
         unsafe::from_c_str(pq::PQfname(self.res, field_num as c_int))
     }
 
-	fn Fnumber(field_name: str) -> int {
+    fn Fnumber(field_name: str) -> int {
         str::as_c_str(field_name, bind pq::PQfnumber(self.res, _)) as int
     }
 
-	fn Ftable(field_num: int) -> Oid {
+    fn Ftable(field_num: int) -> Oid {
         pq::PQftable(self.res, field_num as c_int)
     }
 
-	fn Ftablecol(field_num: int) -> int {
+    fn Ftablecol(field_num: int) -> int {
         pq::PQftablecol(self.res, field_num as c_int) as int
     }
 
-	fn Fformat(field_num: int) -> int {
+    fn Fformat(field_num: int) -> int {
         pq::PQfformat(self.res, field_num as c_int) as int
     }
 
-	fn Ftype(field_num: int) -> Oid {
-	    pq::PQftype(self.res, field_num as c_int)
+    fn Ftype(field_num: int) -> Oid {
+        pq::PQftype(self.res, field_num as c_int)
     }
-	fn Fsize(field_num: int) -> int {
+    fn Fsize(field_num: int) -> int {
         pq::PQfsize(self.res, field_num as c_int) as int
     }
-	fn Fmod(field_num: int) -> int {
+    fn Fmod(field_num: int) -> int {
         pq::PQfmod(self.res, field_num as c_int) as int
     }
     unsafe fn CmdStatus() -> str {
@@ -979,7 +979,7 @@ class Result {
                            field_num as c_int))
     }
     fn GetLength(tup_num: int, field_num: int) -> int {
-        pq::PQgetlength(self.res, 
+        pq::PQgetlength(self.res,
                         tup_num as c_int,
                         field_num as c_int) as int
     }
@@ -989,9 +989,9 @@ class Result {
     fn Nparams() -> int {
         pq::PQnparams(self.res) as int
     }
-        //     // extern Oid	PQparamtype(const PGresult *res, int param_num);
+    //     // extern Oid	PQparamtype(const PGresult *res, int param_num);
     // }
-    
+
 }
 
 #[test]
@@ -1001,21 +1001,21 @@ fn ResultTest() {
     log(error, res.Status());
     log(error, "status:    " + res.StatusAsStr());
     log(error, "error msg: " + res.ErrorMessage());
-	log(error, res.Ntuples());
-	log(error, res.Nfields());
-	log(error, res.BinaryTuples());
+    log(error, res.Ntuples());
+    log(error, res.Nfields());
+    log(error, res.BinaryTuples());
     log(error, res.Fname(1));
-	log(error, res.Ftable(1));
-	log(error, res.Ftablecol(1));
-	log(error, res.Fformat(1));
-	log(error, res.Fsize(1));
-	log(error, res.Fmod(1));
-	log(error, "CmdStatus: " + res.CmdStatus());
-	log(error, res.OidValue());
-	log(error, res.CmdTuples());
-	log(error, res.GetValue(1,1));
-	log(error, res.GetLength(1,1));
-	log(error, res.GetIsNull(1,1));
-	log(error, res.Nparams());
+    log(error, res.Ftable(1));
+    log(error, res.Ftablecol(1));
+    log(error, res.Fformat(1));
+    log(error, res.Fsize(1));
+    log(error, res.Fmod(1));
+    log(error, "CmdStatus: " + res.CmdStatus());
+    log(error, res.OidValue());
+    log(error, res.CmdTuples());
+    log(error, res.GetValue(1,1));
+    log(error, res.GetLength(1,1));
+    log(error, res.GetIsNull(1,1));
+    log(error, res.Nparams());
 
 }
