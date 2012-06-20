@@ -1,0 +1,6 @@
+#[link(
+  name = "pq",
+  vers = "0.01",
+    uuid = "3be40d80-b767-11e1-978e-cfa5ba4612a0"
+)];
+#[crate_type = "lib"];
