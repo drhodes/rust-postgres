@@ -20,13 +20,13 @@ Here's the session I used to do just this:
 psql (9.1.1)
 Type "help" for help.
 
-postgres=# create user rustuser;
+postgres=# <b>create user rustuser;</b>
 <i>CREATE ROLE</i>
 
-postgres=# alter user rustuser password 'rustpass';
-ALTER ROLE
+postgres=# <b>alter user rustuser password 'rustpass';</b>
+<i>ALTER ROLE</i>
 
-postgres=# create database rust_test_db with owner rustuser;
-CREATE DATABASE
+postgres=# <b>create database rust_test_db with owner rustuser;</b>
+<i>CREATE DATABASE</i>
 
 </pre>
