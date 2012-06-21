@@ -5,7 +5,6 @@
 use std;
 import io;
 import libc::*;
-//import result::{ok, err, is_success};
 import str::unsafe;
 
 /*-------------------------------------------------------------------------
@@ -21,7 +20,6 @@ import str::unsafe;
 *
 *-------------------------------------------------------------------------
 */
-
 
 // rhodesd> not sure what to do with these flags... const?
 
@@ -58,27 +56,27 @@ enum ConnStatusType {
 
 enum PostgresPollingStatusType {
     PGRES_POLLING_FAILED = 0,
-    PGRES_POLLING_READING,		/* These two indicate that one may    */
-    PGRES_POLLING_WRITING,		/* use select before polling again.   */
+    PGRES_POLLING_READING, /* These two indicate that one may    */
+    PGRES_POLLING_WRITING, /* use select before polling again.   */
     PGRES_POLLING_OK,
-    PGRES_POLLING_ACTIVE		/* unused; keep for awhile for backwards
+    PGRES_POLLING_ACTIVE /* unused; keep for awhile for backwards
     * compatibility */
 }
 
 enum ExecStatusType {
-    PGRES_EMPTY_QUERY = 0,		/* empty query string was executed */
-    PGRES_COMMAND_OK,			/* a query command that doesn't return
+    PGRES_EMPTY_QUERY = 0, /* empty query string was executed */
+    PGRES_COMMAND_OK, /* a query command that doesn't return
     * anything was executed properly by the
     * backend */
-    PGRES_TUPLES_OK,			/* a query command that returns tuples was
+    PGRES_TUPLES_OK, /* a query command that returns tuples was
     * executed properly by the backend, PGresult
     * contains the result tuples */
-    PGRES_COPY_OUT,				// Copy Out data transfer in progress
-    PGRES_COPY_IN,				// Copy In data transfer in progress
-    PGRES_BAD_RESPONSE,			// an unexpected response was recv'd from the backend
-    PGRES_NONFATAL_ERROR,		// notice or warning message
-    PGRES_FATAL_ERROR,			// query failed
-    PGRES_COPY_BOTH				// Copy In/Out data transfer in progress
+    PGRES_COPY_OUT, // Copy Out data transfer in progress
+    PGRES_COPY_IN, // Copy In data transfer in progress
+    PGRES_BAD_RESPONSE,	// an unexpected response was recv'd from the backend
+    PGRES_NONFATAL_ERROR, // notice or warning message
+    PGRES_FATAL_ERROR, // query failed
+    PGRES_COPY_BOTH // Copy In/Out data transfer in progress
 }
 
 enum PGTransactionStatusType {
@@ -136,7 +134,7 @@ enum PGcancel {}
 //  struct pgNotify *next;		/* list link */
 // } PGnotify;
 
-enum PGnotify {}  // rhodesd> this might have to be built into a full declaration.
+enum PGnotify {}  // rhodesd> this might have to be built into a full declaration?
 
 
 // /* Function types for notice-handling callbacks */
@@ -250,12 +248,11 @@ enum PQnoticeProcessor {} // assume ""
 enum Oid {}
 
 
-
-
 // /* These forms are deprecated! */
 // extern size_t PQescapeString(char *to, const char *from, size_t length);
 // extern unsigned char *PQescapeBytea(const unsigned char *from, size_t from_length,
 //                                  size_t *to_length);
+
 
 
 
@@ -284,14 +281,12 @@ enum Oid {}
 //                int terseOutput,	/* delimiter bars */
 //                int width);		/* width of column, if 0, use variable width */
 
-
-
 // #ifdef __cplusplus
 // }
 // #endif
 //     #endif   /* LIBPQ_FE_H */
 
-
+#[link_name = "pq"]
 native mod pq {
     /* ----------------
     * Exported functions of libpq
@@ -668,7 +663,9 @@ native mod pq {
     fn PQclear(res: *PGresult) -> ();
 
     // /* For freeing other alloc'd results, such as PGnotify structs */
-    // extern void PQfreemem(void *ptr); // assume this won't be needed
+    // extern void PQfreemem(void *ptr); 
+    // drhodes> assume this won't be needed because of the pain.
+    
 
     // /* needed for backward compatibility.  bjm 2003-03-24 */
     // #define PQfreeNotify(ptr) PQfreemem(ptr) // assume this won't be needed.
@@ -883,12 +880,10 @@ native mod pq {
 // ------------------------------------------------------------------
 class Conn {
     priv {
-        let connstr: str;
         let conn: *PGconn;
     }
 
     new(connstr: str) {
-        self.connstr = copy connstr;
         self.conn = str::as_c_str(connstr, pq::PQconnectdb);
     }
 
@@ -952,7 +947,6 @@ class Conn {
         let r = str::as_c_str(query, bind pq::PQexec(self.conn, _));
         Result(r)
     }
-
 }
 
 // ------------------------------------------------------------------
@@ -1093,14 +1087,38 @@ class Result {
     fn Nparams() -> int {
         pq::PQnparams(self.res) as int
     }
-    //     // extern Oid	PQparamtype(const PGresult *res, int param_num);
-    // }
-
+    fn Paramtype(param_num: int) -> Oid {
+        pq::PQparamtype(self.res, param_num as c_int)
+    }    
 }
 
 #[test]
 fn ResultTest() {
     let conn = Connect();
+    
+    let r0 = conn.Exec("drop table if exists movie");
+    log(error, r0.Status());
+    log(error, "status:    " + r0.StatusAsStr());
+    log(error, "error msg: " + r0.ErrorMessage());
+
+    let r1 = conn.Exec("create table movie (\
+                        did serial,\
+                        unique(did),\
+                        title varchar(255),\
+                        year int,\
+                        director varchar(255)\
+                        );"
+                      );
+
+    log(error, r1.Status());
+    log(error, "status:    " + r1.StatusAsStr());
+    log(error, "error msg: " + r1.ErrorMessage());
+
+    let insertstr = "insert into movie (title, year, director) VALUES";
+    conn.Exec( insertstr + "('star wars', 1977, 'lucas')");
+    conn.Exec( insertstr + "('star wars', 1977, 'lucas')");
+    conn.Exec( insertstr + "('star wars', 1977, 'lucas')");
+
     let res = conn.Exec("select * from movie");
     log(error, res.Status());
     log(error, "status:    " + res.StatusAsStr());
@@ -1121,9 +1139,10 @@ fn ResultTest() {
     log(error, res.GetLength(1,1));
     log(error, res.GetIsNull(1,1));
     log(error, res.Nparams());
-    log(error, res.ErrorField(2));
+    log(error, res.ErrorField(1));
 }
 
 
 // #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 //  PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
+
