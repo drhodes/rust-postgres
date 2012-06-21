@@ -6,23 +6,19 @@ These aren't ready yet :)
 Testing
 -------
 
-To test the bindings you'll need to get into postgres
-and create a user and a database.  
+To test the bindings you'll need to get into postgres as a superuser and create a user 
 
-Here's what my session looked like.
+Here's what my session looked like
 
 <pre>
 ~$ psql
 psql (9.1.1)
 Type "help" for help.
 
-postgres=# <b>create user rustuser;</b>
+postgres=# <b>CREATE USER rustuser WITH PASSWORD 'rustpass';</b>
 <i>CREATE ROLE</i>
 
-postgres=# <b>alter user rustuser password 'rustpass';</b>
-<i>ALTER ROLE</i>
-
-postgres=# <b>create database rust_test_db with owner rustuser;</b>
+postgres=# <b>CREATE DATABASE rust_test_db;</b>
 <i>CREATE DATABASE</i>
 
 </pre>
@@ -35,6 +31,9 @@ If postgres is setup correctly and rustc can find your libpq then you might be
 able to get the following output
 
 <pre>
+
+$ rustc --bin pq.rc --test && ./pq
+
 running 1 tests
 rust: "CONNECTION_OK"
 rust: 90101
