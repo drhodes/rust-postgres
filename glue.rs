@@ -10,12 +10,12 @@ enum PgData {
     // |          Name          |     Aliases      |        Description         |
     // |------------------------+------------------+----------------------------|
     // | bigint                 | int8             | signed eight-byte integer  |
-    BigInt(i8),
+    BigInt(i64),
     
     // |------------------------+------------------+----------------------------|
     // | bigserial              | serial8          | autoincrementing           |
     // |                        |                  | eight-byte integer         |
-    BigSerial(i8),
+    BigSerial(i64),
         
     // |------------------------+------------------+----------------------------|
     // | bit [ (n) ]            |                  | fixed-length bit string    |
@@ -64,7 +64,7 @@ enum PgData {
     // |                        |                  | double precision           |
     // | double precision       | float8           | floating-point number (8   |
     // |                        |                  | bytes)                     |
-    Double(f64),    
+    Float64(f64),    
 
     // |------------------------+------------------+----------------------------|
     // | inet                   |                  | IPv4 or IPv6 host address  |
@@ -72,7 +72,7 @@ enum PgData {
     
     // |------------------------+------------------+----------------------------|
     // | integer                | int, int4        | signed four-byte integer   |
-    Int4(i32),
+    Int32(i32), // change from int4 to int32 because of brain violence.
 
     // |------------------------+------------------+----------------------------|
     // | interval [ fields ] [  |                  | time span                  |
@@ -104,11 +104,11 @@ enum PgData {
     // |                        |                  | single precision           |
     // | real                   | float4           | floating-point number (4   |
     // |                        |                  | bytes)                     |
-    Real(f32),
+    Float32(f32),
 
     // |------------------------+------------------+----------------------------|
     // | smallint               | int2             | signed two-byte integer    |
-    SmallInt(i16),
+    Int16(i16),
         
     // |------------------------+------------------+----------------------------|
     // | serial                 | serial4          | autoincrementing four-byte |
@@ -168,6 +168,11 @@ impl of Show for PgData {
         }
     }
 }
+
+
+
+
+
 
           // BigSerial(n),
           // Bit(bs),
