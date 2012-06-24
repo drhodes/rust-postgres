@@ -286,16 +286,10 @@ enum Oid {}
 // #endif
 //     #endif   /* LIBPQ_FE_H */
 
-#[link_name = "pq"]
+//#[link_name = "pq"]
 native mod pq {
-    /* ----------------
-    * Exported functions of libpq
-    * ----------------
-    */
-
-    /* ===	in fe-connect.c === */
-
     // ---------------------------------------------------------------------
+    // In fe-connect.c
     // make a new client connection to the backend
     // Asynchronous (non-blocking)
 
@@ -305,7 +299,7 @@ native mod pq {
     // extern PGconn *PQconnectStartParams(const char **keywords,
     //                                  const char **values, int expand_dbname);
     fn PQconnectStartParams(keywords: **c_char,
-                            values: **c_char, 
+                            values: **c_char,
                             expand_dbnameL: c_int ) -> *PGconn;
 
     // extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
@@ -318,19 +312,19 @@ native mod pq {
     // extern PGconn *PQconnectdbParams(const char **keywords,
     //                               const char **values, int expand_dbname)
     fn PQconnectdbParams(keywords: **char,
-                         values: **char, 
-                          expand_dbname: c_int) -> *PGconn;
+                         values: **char,
+                         expand_dbname: c_int) -> *PGconn;
 
     // extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
     //                          const char *pgoptions, const char *pgtty,
     //                          const char *dbName,
     //                          const char *login, const char *pwd);
-    fn PQsetdbLogin(pghost: *c_char, 
+    fn PQsetdbLogin(pghost: *c_char,
                     pgport: *c_char,
-                    pgoptions: *c_char, 
+                    pgoptions: *c_char,
                     pgtty: *c_char,
                     dbName: *c_char,
-                    login: *c_char, 
+                    login: *c_char,
                     pwd: *c_char) -> *PGconn;
 
     // #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
@@ -640,7 +634,7 @@ native mod pq {
 
     // extern const char *pg_encoding_to_char(int encoding);
     fn pg_encoding_to_char(encoding: c_int) -> *c_char;
-    
+
     // extern int	pg_valid_server_encoding_id(int encoding);
     fn pg_valid_server_encoding_id(encoding: c_int) -> c_int;
 
@@ -663,9 +657,9 @@ native mod pq {
     fn PQclear(res: *PGresult) -> ();
 
     // /* For freeing other alloc'd results, such as PGnotify structs */
-    // extern void PQfreemem(void *ptr); 
+    // extern void PQfreemem(void *ptr);
     // drhodes> assume this won't be needed because of the pain.
-    
+
 
     // /* needed for backward compatibility.  bjm 2003-03-24 */
     // #define PQfreeNotify(ptr) PQfreemem(ptr) // assume this won't be needed.
@@ -691,28 +685,28 @@ native mod pq {
     fn PQresultAlloc(res: *PGresult, nBytes: size_t) -> *c_void;
 
     // extern int	PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);
-    fn PQsetvalue(res: *PGresult, 
-                  tup_num: c_int, 
-                  field_num: c_int, 
-                  value: *c_char, 
+    fn PQsetvalue(res: *PGresult,
+                  tup_num: c_int,
+                  field_num: c_int,
+                  value: *c_char,
                   len: c_int) -> c_int;
-    
+
     // /* Quoting strings before inclusion in queries. */
     // extern size_t PQescapeStringConn(PGconn *conn,
     //                               char *to, const char *from, size_t length,
     //                               int *error);
     fn PQescapeStringConn(conn: *PGconn,
-                          to: *char, 
-                          from: *char, 
+                          to: *char,
+                          from: *char,
                           length: size_t,
                           error: *int) -> size_t;
 
     // extern char *PQescapeLiteral(PGconn *conn, const char *str, size_t len);
     fn PQescapeLiteral(conn: *PGconn, str: *char, len: size_t) -> *c_char;
-    
+
     // extern char *PQescapeIdentifier(PGconn *conn, const char *str, size_t len)
     fn PQescapeIdentifier(conn: *PGconn, str: *char, len: size_t) -> *c_char;
-    
+
     // extern unsigned char *PQescapeByteaConn(PGconn *conn,
     //                                      const unsigned char *from, size_t from_length,
     //                                      size_t *to_length);
@@ -720,7 +714,7 @@ native mod pq {
                          from: *c_uchar,
                          from_length: size_t,
                          to_length : *size_t) -> *c_uchar;
-    
+
     // extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
     //                                    size_t *retbuflen);
     fn PQunescapeBytea(strtext: *c_uchar,
@@ -751,7 +745,7 @@ native mod pq {
     // extern void PQuntrace(PGconn *conn);
     fn PQuntrace(conn: *PGconn) -> c_void;
 
-    
+
     // /* Override default notice handling routines */
     // extern PQnoticeReceiver PQsetNoticeReceiver(PGconn *conn,
     //                                          PQnoticeReceiver proc,
@@ -792,7 +786,7 @@ native mod pq {
     // extern int PQsendPrepare(PGconn *conn, const char *stmtName,
     //                       const char *query, int nParams,
     //                       const Oid *paramTypes);
-    fn PQsendPrepare(conn: *PGconn, 
+    fn PQsendPrepare(conn: *PGconn,
                      stmtName: *c_char,
                      query: *c_char,
                      nParams: c_int,
@@ -819,7 +813,7 @@ native mod pq {
     // /* Routines for managing an asynchronous query */
     // extern int	PQisBusy(PGconn *conn);
     fn PQisBusy(conn: *PGconn) -> c_int;
-    
+
     // extern int	PQconsumeInput(PGconn *conn);
     fn PQconsumeInput(conn: *PGconn) -> c_int;
 
@@ -869,7 +863,7 @@ native mod pq {
     // extern PGPing PQpingParams(const char **keywords,
     //                         const char **values, int expand_dbname);
     fn PQpingParams(keywords: **c_char,
-                    values: **c_char, 
+                    values: **c_char,
                     expand_dbname: c_int) -> PGPing;
 
     // /* Force the write buffer to be written (or at least try) */
@@ -944,7 +938,7 @@ class Conn {
     // ------------------------------------------------------------------
     fn Exec(query: str) -> Result {
         //fn PQexec(conn: *PGconn, query: *c_char) -> *PGresult;
-        let r = str::as_c_str(query, bind pq::PQexec(self.conn, _));
+        let r = str::as_c_str(query, {|x| pq::PQexec(self.conn, x)});
         Result(r)
     }
 }
@@ -984,6 +978,10 @@ class Result {
 
     fn Status() -> ExecStatusType {
         ret pq::PQresultStatus(self.res)
+    }
+
+    fn Ok() -> bool {
+        ret self.Status() == PGRES_COMMAND_OK || self.Status() == PGRES_TUPLES_OK;
     }
 
     fn StatusAsStr() -> str {
@@ -1034,7 +1032,7 @@ class Result {
     }
 
     fn Fnumber(field_name: str) -> int {
-        str::as_c_str(field_name, bind pq::PQfnumber(self.res, _)) as int
+        str::as_c_str(field_name, {|x| pq::PQfnumber(self.res, x)}) as int
     }
 
     fn Ftable(field_num: int) -> Oid {
@@ -1065,7 +1063,7 @@ class Result {
     //     // extern char *PQoidStatus(const PGresult *res);	/* old and ugly */
     // }
     fn OidValue() -> Oid {          // new and improved
-        pq::PQoidValue(self.res)	
+        pq::PQoidValue(self.res)
     }
     unsafe fn CmdTuples() -> str {
         unsafe::from_c_str(pq::PQcmdTuples(self.res))
@@ -1089,13 +1087,13 @@ class Result {
     }
     fn Paramtype(param_num: int) -> Oid {
         pq::PQparamtype(self.res, param_num as c_int)
-    }    
+    }
 }
 
 #[test]
 fn ResultTest() {
     let conn = Connect();
-    
+
     let r0 = conn.Exec("drop table if exists movie");
     log(error, r0.Status());
     log(error, "status:    " + r0.StatusAsStr());
@@ -1115,9 +1113,9 @@ fn ResultTest() {
     log(error, "error msg: " + r1.ErrorMessage());
 
     let insertstr = "insert into movie (title, year, director) VALUES";
-    conn.Exec( insertstr + "('star wars', 1977, 'lucas')");
-    conn.Exec( insertstr + "('star wars', 1977, 'lucas')");
-    conn.Exec( insertstr + "('star wars', 1977, 'lucas')");
+    conn.Exec( insertstr + "('a new hope', 1977, 'lucas')");
+    conn.Exec( insertstr + "('the empire strikes back', 1980, 'Kershner')");
+    conn.Exec( insertstr + "('return of the jedi', 1983, 'lucas')");
 
     let res = conn.Exec("select * from movie");
     log(error, res.Status());
@@ -1143,6 +1141,9 @@ fn ResultTest() {
 }
 
 
+
+
+
+
 // #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 //  PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
-
