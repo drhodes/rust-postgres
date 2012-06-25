@@ -14,24 +14,29 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | bigint                 | int8             | signed eight-byte integer  |
     Int64(i64),
+    NullInt64,
 
     // |------------------------+------------------+----------------------------|
     // | bigserial              | serial8          | autoincrementing           |
     // |                        |                  | eight-byte integer         |
     BigSerial(i64),
+    NullBigSerial,
 
     // |------------------------+------------------+----------------------------|
     // | bit [ (n) ]            |                  | fixed-length bit string    |
     Bit([bool]),
+    NullBit,
 
     // |------------------------+------------------+----------------------------|
     // | bit varying [ (n) ]    | varbit           | variable-length bit string |
     VarBit([bool]),
+    NullVarBit,
 
     // |------------------------+------------------+----------------------------|
     // | boolean                | bool             | logical Boolean            |
     // |                        |                  | (true/false)               |
     Bool(bool),
+    NullBool,
 
     // |------------------------+------------------+----------------------------|
     // | box                    |                  | rectangular box on a plane |
@@ -40,21 +45,25 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | bytea                  |                  | binary data ("byte array") |
     ByteA([u8]),
+    NullByteA,
 
     // |------------------------+------------------+----------------------------|
     // | character varying [    | varchar [ (n) ]  | variable-length character  |
     // | (n) ]                  |                  | string                     |
     VarChar(str),
+    NullVarChar,
 
     // |------------------------+------------------+----------------------------|
     // | character [ (n) ]      | char [ (n) ]     | fixed-length character     |
     // |                        |                  | string                     |
     Char(str),
+    NullChar,
 
     // |------------------------+------------------+----------------------------|
     // | cidr                   |                  | IPv4 or IPv6 network       |
     // |                        |                  | address                    |
     Cidr(IP),
+    NullCidr,
 
     // |------------------------+------------------+----------------------------|
     // | circle                 |                  | circle on a plane          |
@@ -62,20 +71,24 @@ enum PgData {
     // | date                   |                  | calendar date (year,       |
     // |                        |                  | month, day)                |
     Date(u8,u8,u8),
+    NullDate,
 
     // |------------------------+------------------+----------------------------|
     // |                        |                  | double precision           |
     // | double precision       | float8           | floating-point number (8   |
     // |                        |                  | bytes)                     |
     Float64(f64),
+    NullFloat64,
 
     // |------------------------+------------------+----------------------------|
     // | inet                   |                  | IPv4 or IPv6 host address  |
     Inet(IP),
+    NullInet,
 
     // |------------------------+------------------+----------------------------|
     // | integer                | int, int4        | signed four-byte integer   |
     Int32(i32),
+    NullInt32,
 
     // |------------------------+------------------+----------------------------|
     // | interval [ fields ] [  |                  | time span                  |
@@ -89,6 +102,7 @@ enum PgData {
     // | macaddr                |                  | MAC (Media Access Control) |
     // |                        |                  | address                    |
     MacAddr(u8,u8,u8,u8,u8,u8),
+    NullMacAddr,
 
     // |------------------------+------------------+----------------------------|
     // | money                  |                  | currency amount            |
@@ -107,10 +121,12 @@ enum PgData {
     // | real                   | float4           | floating-point number (4   |
     // |                        |                  | bytes)                     |
     Float32(f32),
+    NullFloat32,
 
     // |------------------------+------------------+----------------------------|
     // | smallint               | int2             | signed two-byte integer    |
     Int16(i16),
+    NullInt16,
 
     // |------------------------+------------------+----------------------------|
     // | serial                 | serial4          | autoincrementing four-byte |
@@ -123,16 +139,19 @@ enum PgData {
     // | text                   |                  | variable-length character  |
     // |                        |                  | string                     |
     Text(str),
+    NullText,
 
     // |------------------------+------------------+----------------------------|
     // | time [ (p) ] [ without |                  | time of day (no time zone) |
     // | time zone ]            |                  |                            |
     Time(time::tm),
+    NullTime,
 
     // |------------------------+------------------+----------------------------|
     // | time [ (p) ] with time | timetz           | time of day, including     |
     // | zone                   |                  | time zone                  |
     TimeTz(time::tm),
+    NullTimeTz,
 
     // |------------------------+------------------+----------------------------|
     // | timestamp [ (p) ] [    |                  | date and time (no time     |
@@ -151,10 +170,12 @@ enum PgData {
     // | uuid                   |                  | universally unique         |
     // |                        |                  | identifier                 |
     Uuid([u8]),
+    NullUuid,
     // |------------------------+------------------+----------------------------|
     // | xml                    |                  | XML data                   |
 
     Xml([u8]),
+    NullXml,
     // +------------------------------------------------------------------------+
     PgDataErr(str),
 }
@@ -166,7 +187,7 @@ iface Show {
 impl of Show for PgData {
     fn show() -> str {
         alt self {
-          Int64(n) {"Asdf"}
+          Int64(n) {#fmt("%d", n as int)} // todo: how to format a i64?
           VarChar(s) {#fmt("'%s'", s)}
           Int32(n) {#fmt("%d", n as int)}
           _ { "asdf"}
@@ -180,7 +201,7 @@ type Row = [PgData];
 fn seq(a: int, b: int) -> [int] {
     let mut i = a;
     let mut accum: [int] = [];
-
+    //int::range(a,b,{|x| vec::push(accum, x)});
     while i < b {
         vec::push(accum, i);
         i += 1;
@@ -294,6 +315,8 @@ unsafe fn ResultField2PGdata(res: Result, tup: int,  fld: int) -> PgData {
       // ACLITEM {}
       // CSTRINGARRAY {}
       // BPCHAR {}
+
+      // -------------------------------------------------------
       VARCHAR {
         VarChar(unsafe::from_c_str(res.GetValue(tup, fld)))
       }
@@ -339,11 +362,10 @@ unsafe fn ResultField2PGdata(res: Result, tup: int,  fld: int) -> PgData {
     }
 }
 
-unsafe fn GetRows(res: Result) -> [PgData] {
-    // log(error, res.Ntuples());
+unsafe fn GetRow(res: Result, rownum: int) -> [PgData] {
     if res.Ok() {
         let flds = seq(0, res.Nfields());
-        let f = {|x|ResultField2PGdata(res, 0, x)};
+        let f = {|x|ResultField2PGdata(res, rownum, x)};
         let rs = vec::map(flds, f);
         rs
 
@@ -352,50 +374,48 @@ unsafe fn GetRows(res: Result) -> [PgData] {
     }
 }
 
-type Movie = {
-    // Maybe there's a way to strengthen the types
-    did: PgData,
-    title: PgData,
-    year: PgData,
-    director: PgData
-};
-
-#[test]
-fn ResultTest() {
-    let conn = TestConnect();
-
-    let r0 = conn.Exec("drop table if exists movie");
-    if !r0.Ok() {
-        log(error, r0.Status());
-        log(error, "status:    " + r0.StatusAsStr());
-        log(error, "error msg: " + r0.ErrorMessage());   
+unsafe fn GetAllRows(res: Result) -> [[PgData]] {    
+    if res.Ok() {
+        let tups = seq(0, res.Ntuples());
+        let f = {|x|GetRow(res, x)};
+        let rs = vec::map(tups, f);
+        rs
+    } else {
+        [[PgDataErr("GetAllRows fails because ... ")]]
     }
 
-    let r1 = conn.Exec("create table movie (\
-                        did serial,\
-                        unique(did),\
-                        title varchar(255),\
-                        year int,\
-                        director varchar(255)\
-                        );"
-                      );
+    
+}
 
-    assert r1.Ok();
-    //log(error, "error msg: " + r1.ErrorMessage());
 
-    let insertstr = "insert into movie (title, year, director) VALUES";
+fn InsertStarWars(conn: Conn, tablename: str) {
+    let insertstr = #fmt("insert into %s (title, year, director) VALUES", tablename);
     conn.Exec( insertstr + "('a new hope', 1977, 'lucas')");
     conn.Exec( insertstr + "('the empire strikes back', 1980, 'Kershner')");
-    conn.Exec( insertstr + "('return of the jedi', 1983, 'lucas')");
+    conn.Exec( insertstr + "('return of the jedi', 1983, 'lucas')");   
+}
 
-    log(error, "-------------------------------------------------------");
-    let res = conn.Exec("select * from movie");
+
+#[test]
+fn GetRowTest() {
+    let conn = TestConnect();
+
+    Assure(conn.Exec("drop table if exists movie"));
+
+    Assure(conn.Exec("create table movie (\
+                      did serial,\
+                      unique(did),\
+                      title varchar(255),\
+                      year int,\
+                      director varchar(255)\
+                      );"
+                    ));
+
+    InsertStarWars(conn, "movie");
+    let res = Assure(conn.Exec("select * from movie"));
 
     unsafe {
-        let rows = GetRows(res);
-        log(error, rows);
-        log(error, conn.StatusAsStr());
-        assert rows == [
+        assert GetRow(res, 0) == [
             Int32(1), 
             VarChar("a new hope"), 
             Int32(1977), 
@@ -404,3 +424,145 @@ fn ResultTest() {
     }
     conn.Exec("drop table if exists movie");
 }
+
+// ------------------------------------------------------------------
+#[test]
+fn GetAllRowTest() {
+    let conn = TestConnect();
+    Assure(conn.Exec("drop table if exists movie2"));
+    Assure(conn.Exec("create table movie2 (\
+                      did serial,\
+                      unique(did),\
+                      title varchar(255),\
+                      year int,\
+                      director varchar(255)\
+                      );"
+                      ));
+
+    InsertStarWars(conn, "movie2");
+    let res = Assure(conn.Exec("select * from movie2"));
+
+    unsafe {
+        let rows = GetAllRows(res);
+        assert rows == [
+            [Int32(1), 
+             VarChar("a new hope"), 
+             Int32(1977), 
+             VarChar("lucas"),
+            ],
+            [Int32(2), 
+             VarChar("the empire strikes back"), 
+             Int32(1980), 
+             VarChar("Kershner")
+            ],
+            [Int32(3), 
+             VarChar("return of the jedi"), 
+             Int32(1983), 
+             VarChar("lucas")
+            ],            
+        ];
+    }
+    conn.Exec("drop table if exists movie2");
+}
+
+// ------------------------------------------------------------------
+#[test]
+fn UseCase1() {
+    type Movie = {
+        // Maybe there's a way to strengthen the types
+        did: PgData,
+        title: PgData,
+        year: PgData,
+        director: PgData
+            
+    };
+    
+    let conn = TestConnect();
+    Assure(conn.Exec("drop table if exists movie3"));
+    Assure(conn.Exec("\
+                      create table movie3 (\
+                      did serial,\
+                      unique(did),\
+                      title varchar(255),\
+                      year int,\
+                      director varchar(255)\
+                      );"
+                      ));
+
+
+    InsertStarWars(conn, "movie3");
+
+    unsafe fn MovieFromTitle(c: Conn, title: str) -> Movie {
+        let q = #fmt("select * from movie3 where title = '%s'", title);
+        let res = Assure(c.Exec(q));
+        let row = GetRow(res, 0);
+        let mov = { 
+            did:copy row[0],
+            title:copy row[1],
+            year:copy row[2],
+            director:copy row[3]
+        }; 
+        //log(error, mov);
+        ret mov
+
+    }
+    unsafe {
+        assert MovieFromTitle(conn, "a new hope") == {
+            did:Int32(1), 
+            title:VarChar("a new hope"), 
+            year:Int32(1977), 
+            director:VarChar("lucas"),
+        }
+    }
+
+    Assure(conn.Exec("drop table if exists movie3"));
+}
+
+// -----------------------------------------------------------------------------
+#[test]
+fn UseCase2() {
+    enum Movie {
+        Movie([PgData]),
+        NullMovie
+    };
+    
+    iface MovieI {        
+        unsafe fn FromTitle(Conn, str) -> Movie;
+    }
+
+    impl MovieI for Movie {        
+        unsafe fn FromTitle(c: Conn, title: str) -> Movie {
+            let res = Assure(c.Exec(#fmt("select * from movie4 where title = '%s'", title)));
+            let row = GetRow(res, 0);
+            Movie(row)
+        }
+    }
+
+    let conn = TestConnect();
+    Assure(conn.Exec("drop table if exists movie4"));
+    Assure(conn.Exec("\
+                      create table movie4 (\
+                      did serial,\
+                      unique(did),\
+                      title varchar(255),\
+                      year int,\
+                      director varchar(255)\
+                      );"
+                    ));
+    
+    InsertStarWars(conn, "movie4");
+    unsafe {
+        alt NullMovie.FromTitle(conn, "a new hope") {
+          Movie(rs) { assert rs == [Int32(1),
+                                    VarChar("a new hope"),
+                                    Int32(1977),
+                                    VarChar("lucas")
+                                   ]}          
+          NullMovie { log(error, "From title fails") }
+        }
+    }
+    Assure(conn.Exec("drop table if exists movie4"));
+
+}
+
+

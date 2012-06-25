@@ -34,45 +34,28 @@ able to get the following output
 
 $ rustc --bin pq.rc --test && ./pq
 
-running 1 tests
-rust: "CONNECTION_OK"
-rust: 90101
-rust: 90101
-rust: 3
-rust: "rust_test_db"
-rust: "rustuser"
-rust: "rustpass"
-rust: "localhost"
-rust: "5432"
-rust: ""
-rust: ""
-rust: 1
-rust: "status:    PGRES_COMMAND_OK"
-rust: "error msg: "
+running 5 tests
+NOTICE:  table "movie" does not exist, skipping
+NOTICE:  table "movie4" does not exist, skipping
+NOTICE:  CREATE TABLE will create implicit sequence "movie4_did_seq" for serial column "movie4.did"
 NOTICE:  CREATE TABLE will create implicit sequence "movie_did_seq" for serial column "movie.did"
+NOTICE:  table "movie1" does not exist, skipping
+NOTICE:  table "movie2" does not exist, skipping
+NOTICE:  CREATE TABLE will create implicit sequence "movie1_did_seq" for serial column "movie1.did"
+NOTICE:  CREATE TABLE will create implicit sequence "movie2_did_seq" for serial column "movie2.did"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie4_did_key" for table "movie4"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie2_did_key" for table "movie2"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie1_did_key" for table "movie1"
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie_did_key" for table "movie"
-rust: 1
-rust: "status:    PGRES_COMMAND_OK"
-rust: "error msg: "
-rust: 2
-rust: "status:    PGRES_TUPLES_OK"
-rust: "error msg: "
-rust: 3
-rust: 4
-rust: 0
-rust: "title"
-rust: 48686
-rust: 2
-rust: 0
-rust: -1
-rust: 259
-rust: "CmdStatus: SELECT 3"
-rust: 0
-rust: "3"
-rust: "star wars"
-rust: 9
-rust: 0
-rust: 0
-rust: "No error found"
+NOTICE:  table "movie3" does not exist, skipping
+NOTICE:  CREATE TABLE will create implicit sequence "movie3_did_seq" for serial column "movie3.did"
+test glue::GetAllRowTest ... ok
 test ResultTest ... ok
+test glue::UseCase2 ... ok
+test glue::GetRowTest ... ok
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie3_did_key" for table "movie3"
+test glue::UseCase1 ... ok
+
+result: ok. 5 passed; 0 failed; 0 ignored
+
 </pre>
