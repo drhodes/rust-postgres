@@ -34,28 +34,28 @@ able to get the following output
 
 $ rustc --bin pq.rc --test && ./pq
 
-running 2 tests
-rust: ~"CONNECTION_OK"
-rust: ~"CONNECTION_OK"
-rust: 90101
-rust: 90101
-rust: 90101
-rust: 90101
-rust: 3
-rust: 3
+running 5 tests
+NOTICE:  table "movie2" does not exist, skipping
+NOTICE:  table "movie4" does not exist, skipping
+NOTICE:  table "movie3" does not exist, skipping
 NOTICE:  table "movie1" does not exist, skipping
-NOTICE:  table "movie" does not exist, skipping
+NOTICE:  CREATE TABLE will create implicit sequence "movie2_did_seq" for serial column "movie2.did"
+NOTICE:  CREATE TABLE will create implicit sequence "movie4_did_seq" for serial column "movie4.did"
+NOTICE:  CREATE TABLE will create implicit sequence "movie3_did_seq" for serial column "movie3.did"
 NOTICE:  CREATE TABLE will create implicit sequence "movie1_did_seq" for serial column "movie1.did"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie2_did_key" for table "movie2"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie3_did_key" for table "movie3"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie4_did_key" for table "movie4"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie1_did_key" for table "movie1"
+test glue::GetAllRowTest ... ok
+test glue::UseCase2 ... ok
+test ResultTest ... ok
+test glue::UseCase1 ... ok
+NOTICE:  table "movie" does not exist, skipping
 NOTICE:  CREATE TABLE will create implicit sequence "movie_did_seq" for serial column "movie.did"
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie_did_key" for table "movie"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie1_did_key" for table "movie1"
-rust: ~"PGRES_COMMAND_OK"
-rust: ~"-------------------------------------------------------"
-rust: ~[Int32(1), VarChar(~"a new hope"), Int32(1977), VarChar(~"lucas")]
-rust: ~"CONNECTION_OK"
-test glue::ResultTest ... ok
-test ResultTest ... ok
+test glue::GetRowTest ... ok
 
-result: ok. 2 passed; 0 failed; 0 ignored
+result: ok. 5 passed; 0 failed; 0 ignored
 
 </pre>
