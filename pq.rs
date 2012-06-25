@@ -3,8 +3,8 @@
 // license that can be found in the LICENSE file.
 
 use std;
-import io;
 import libc::*;
+import io;
 import str::unsafe;
 
 /*-------------------------------------------------------------------------
@@ -37,7 +37,7 @@ import str::unsafe;
 // Application-visible enum types */
 
 enum ConnStatusType {
-    CONNECTION_OK,
+    CONNECTION_OK = 0, // rhodesd> I set this explicitly to 0: seems to work.
     CONNECTION_BAD,
 
     // The existence of these should never be relied upon - they should only
@@ -99,6 +99,90 @@ enum PGPing {
     PQPING_NO_RESPONSE,			/* could not establish connection */
     PQPING_NO_ATTEMPT			/* connection not attempted (bad params) */
 }
+
+
+enum Ftype {
+    BOOL = 16,
+    BYTEA = 17,
+    CHAR = 18,
+    NAME = 19,
+    INT8 = 20,
+    INT2 = 21,
+    INT2VECTOR = 22,
+    INT4 = 23,
+    REGPROC = 24,
+    TEXT = 25,
+    OID = 26,
+    TID = 27,
+    XID = 28,
+    CID = 29,
+    VECTOR = 30,
+    JSON = 114,
+    XML = 142,
+    PGNODETREE = 194,
+    POINT = 600,
+    LSEG = 601,
+    PATH = 602,
+    BOX = 603,
+    POLYGON = 604,
+    LINE = 628,
+    FLOAT4 = 700,
+    FLOAT8 = 701,
+    ABSTIME = 702,
+    RELTIME = 703,
+    TINTERVAL = 704,
+    UNKNOWN = 705,
+    CIRCLE = 718,
+    CASH = 790,
+    MACADDR = 829,
+    INET = 869,
+    CIDR = 650,
+    INT4ARRAY = 1007,
+    TEXTARRAY = 1009,
+    FLOAT4ARRAY = 1021,
+    ACLITEM = 1033,
+    CSTRINGARRAY = 1263,
+    BPCHAR = 1042,
+    VARCHAR = 1043,
+    DATE = 1082,
+    TIME = 1083,
+    TIMESTAMP = 1114,
+    TIMESTAMPTZ = 1184,
+    INTERVAL = 1186,
+    TIMETZ = 1266,
+    BIT = 1560,
+    VARBIT = 1562,
+    NUMERIC = 1700,
+    REFCURSOR = 1790,
+    REGPROCEDURE = 2202,
+    REGOPER = 2203,
+    REGOPERATOR = 2204,
+    REGCLASS = 2205,
+    REGTYPE = 2206,
+    REGTYPEARRAY = 2211,
+    TSVECTOR = 3614,
+    GTSVECTOR = 3642,
+    TSQUERY = 3615,
+    REGCONFIG = 3734,
+    REGDICTIONARY = 3769,
+    INT4RANGE = 3904,
+    RECORD = 2249,
+    RECORDARRAY = 2287,
+    CSTRING = 2275,
+    ANY = 2276,
+    ANYARRAY = 2277,
+    VOID = 2278,
+    TRIGGER = 2279,
+    LANGUAGE_HANDLER = 2280,
+    INTERNAL = 2281,
+    OPAQUE = 2282,
+    ANYELEMENT = 2283,
+    ANYNONARRAY = 2776,
+    ANYENUM = 3500,
+    FDW_HANDLER = 3115,
+    ANYRANGE = 3831,
+}
+
 
 // /* PGconn encapsulates a connection to the backend.
 // * The contents of this struct are not supposed to be known to applications.
@@ -413,8 +497,8 @@ native mod pq {
 
     // extern const char *PQparameterStatus(const PGconn *conn,
     //                                   const char *paramName);
-    fn  PQparameterStatus(conn: *PGconn,
-                          paramName: *c_char) -> *c_char;
+    fn PQparameterStatus(conn: *PGconn,
+                         paramName: *c_char) -> *c_char;
 
     // extern int	PQprotocolVersion(const PGconn *conn);
     fn PQprotocolVersion(conn: *PGconn) -> c_int;
@@ -576,7 +660,7 @@ native mod pq {
     fn PQexecParams(conn: *PGconn,
                     command: *c_char,
                     nParams: c_int,
-                    paramTypes: *Oid,
+                    paramTypes: *Oid,  
                     paramValues: *c_char,
                     paramLengths: *c_int,
                     paramFormats: *c_int,
@@ -882,7 +966,15 @@ class Conn {
     }
 
     // ------------------------------------------------------------------
-    fn Status() -> str {
+    fn Status() -> ConnStatusType {
+        ret pq::PQstatus(self.conn);
+    }
+
+    fn Ok() -> bool {
+        self.Status() != CONNECTION_OK 
+    }
+
+    fn StatusAsStr() -> str {
         ret alt pq::PQstatus(self.conn) {
           CONNECTION_OK { "CONNECTION_OK" }
           CONNECTION_BAD { "CONNECTION_BAD" }
@@ -945,7 +1037,7 @@ class Conn {
 
 // ------------------------------------------------------------------
 // #[test]
-fn Connect() -> Conn {
+fn TestConnect() -> Conn {
     let connstr = "host=localhost \
                    port=5432 \
                    user=rustuser \
@@ -954,17 +1046,20 @@ fn Connect() -> Conn {
                    sslmode=disable";
 
     let conn = Conn(connstr);
-    log(error, conn.Status());
-    log(error, conn.LibVersion());
-    log(error, conn.ServerVersion());
-    log(error, conn.ProtocolVersion());
-    log(error, conn.Db());
-    log(error, conn.User());
-    log(error, conn.Pass());
-    log(error, conn.Host());
-    log(error, conn.Port());
-    log(error, conn.Tty());
-    log(error, conn.Options());
+    if !conn.Ok() {
+        log(error, conn.StatusAsStr());
+        log(error, conn.LibVersion());
+        log(error, conn.ServerVersion());
+        log(error, conn.ProtocolVersion());
+    }
+    assert conn.Db() == "rust_test_db";
+    assert conn.User() == "rustuser";
+    assert conn.Pass() == "rustpass";
+    assert conn.Host() == "localhost";
+    assert conn.Port() == "5432";
+
+    //log(error, conn.Tty());
+    //log(error, conn.Options());
     //log(error, conn.ResetStart());
     ret conn
 }
@@ -1047,9 +1142,99 @@ class Result {
         pq::PQfformat(self.res, field_num as c_int) as int
     }
 
-    fn Ftype(field_num: int) -> Oid {
-        pq::PQftype(self.res, field_num as c_int)
+    
+    // fn Ftype(field_num: int) -> Oid {
+    //     pq::PQftype(self.res, field_num as c_int)
+    // }
+
+    // rhodesd> I'm pretty sure this is an abomination, 
+    // but the type system wasn't liking anything I had to say
+    fn Ftype(field_num: int) -> Ftype {
+        let oid = pq::PQftype(self.res, field_num as c_int) as c_int;
+        alt oid { 
+          16 { BOOL }
+          17 { BYTEA }
+          18 { CHAR }
+          19 { NAME }
+          20 { INT8 }
+          21 { INT2 }
+          22 { INT2VECTOR }
+          23 { INT4 }
+          24 { REGPROC }
+          25 { TEXT }
+          26 { OID }
+          27 { TID }
+          28 { XID }
+          29 { CID }
+          30 { VECTOR }
+          114 { JSON }
+          142 { XML }
+          194 { PGNODETREE }
+          600 { POINT }
+          601 { LSEG }
+          602 { PATH }
+          603 { BOX }
+          604 { POLYGON }
+          628 { LINE }
+          700 { FLOAT4 }
+          701 { FLOAT8 }
+          702 { ABSTIME }
+          703 { RELTIME }
+          704 { TINTERVAL }
+          705 { UNKNOWN }
+          718 { CIRCLE }
+          790 { CASH }
+          829 { MACADDR }
+          869 { INET }
+          650 { CIDR }
+          1007 { INT4ARRAY }
+          1009 { TEXTARRAY }
+          1021 { FLOAT4ARRAY }
+          1033 { ACLITEM }
+          1263 { CSTRINGARRAY }
+          1042 { BPCHAR }
+          1043 { VARCHAR }
+          1082 { DATE }
+          1083 { TIME }
+          1114 { TIMESTAMP }
+          1184 { TIMESTAMPTZ }
+          1186 { INTERVAL }
+          1266 { TIMETZ }
+          1560 { BIT }
+          1562 { VARBIT }
+          1700 { NUMERIC }
+          1790 { REFCURSOR }
+          2202 { REGPROCEDURE }
+          2203 { REGOPER }
+          2204 { REGOPERATOR }
+          2205 { REGCLASS }
+          2206 { REGTYPE }
+          2211 { REGTYPEARRAY }
+          3614 { TSVECTOR }
+          3642 { GTSVECTOR }
+          3615 { TSQUERY }
+          3734 { REGCONFIG }
+          3769 { REGDICTIONARY }
+          3904 { INT4RANGE }
+          2249 { RECORD }
+          2287 { RECORDARRAY }
+          2275 { CSTRING }
+          2276 { ANY }
+          2277 { ANYARRAY }
+          2278 { VOID }
+          2279 { TRIGGER }
+          2280 { LANGUAGE_HANDLER }
+          2281 { INTERNAL }
+          2282 { OPAQUE }
+          2283 { ANYELEMENT }
+          2776 { ANYNONARRAY }
+          3500 { ANYENUM }
+          3115 { FDW_HANDLER }
+          3831 { ANYRANGE }
+          _ { fail("Received an unknown oid in ftype method of Result") }
+        }
     }
+    
     fn Fsize(field_num: int) -> int {
         pq::PQfsize(self.res, field_num as c_int) as int
     }
@@ -1068,11 +1253,10 @@ class Result {
     unsafe fn CmdTuples() -> str {
         unsafe::from_c_str(pq::PQcmdTuples(self.res))
     }
-    unsafe fn GetValue(tup_num: int, field_num: int) -> str {
-        unsafe::from_c_str(
-            pq::PQgetvalue(self.res,
-                           tup_num as c_int,
-                           field_num as c_int))
+    unsafe fn GetValue(tup_num: int, field_num: int) -> *c_char {
+        pq::PQgetvalue(self.res,
+                       tup_num as c_int,
+                       field_num as c_int)
     }
     fn GetLength(tup_num: int, field_num: int) -> int {
         pq::PQgetlength(self.res,
@@ -1092,14 +1276,16 @@ class Result {
 
 #[test]
 fn ResultTest() {
-    let conn = Connect();
+    let conn = TestConnect();
 
-    let r0 = conn.Exec("drop table if exists movie");
-    log(error, r0.Status());
-    log(error, "status:    " + r0.StatusAsStr());
-    log(error, "error msg: " + r0.ErrorMessage());
+    let r0 = conn.Exec("drop table if exists movie1");
+    assert r0.Ok();
+    if !r0.Ok() {
+        log(error, "status:    " + r0.StatusAsStr());
+        log(error, "error msg: " + r0.ErrorMessage());
+    }
 
-    let r1 = conn.Exec("create table movie (\
+    let r1 = conn.Exec("create table movie1 (\
                         did serial,\
                         unique(did),\
                         title varchar(255),\
@@ -1108,36 +1294,39 @@ fn ResultTest() {
                         );"
                       );
 
-    log(error, r1.Status());
-    log(error, "status:    " + r1.StatusAsStr());
-    log(error, "error msg: " + r1.ErrorMessage());
+    log(error, r1.StatusAsStr());
+    if !r1.Ok() {
+        log(error, "status:    " + r1.StatusAsStr());
+        log(error, "error msg: " + r1.ErrorMessage());
+    }
 
-    let insertstr = "insert into movie (title, year, director) VALUES";
+    let insertstr = "insert into movie1 (title, year, director) VALUES";
     conn.Exec( insertstr + "('a new hope', 1977, 'lucas')");
     conn.Exec( insertstr + "('the empire strikes back', 1980, 'Kershner')");
     conn.Exec( insertstr + "('return of the jedi', 1983, 'lucas')");
 
-    let res = conn.Exec("select * from movie");
-    log(error, res.Status());
-    log(error, "status:    " + res.StatusAsStr());
-    log(error, "error msg: " + res.ErrorMessage());
-    log(error, res.Ntuples());
-    log(error, res.Nfields());
-    log(error, res.BinaryTuples());
-    log(error, res.Fname(1));
-    log(error, res.Ftable(1));
-    log(error, res.Ftablecol(1));
-    log(error, res.Fformat(1));
-    log(error, res.Fsize(1));
-    log(error, res.Fmod(1));
-    log(error, "CmdStatus: " + res.CmdStatus());
-    log(error, res.OidValue());
-    log(error, res.CmdTuples());
-    log(error, res.GetValue(1,1));
-    log(error, res.GetLength(1,1));
-    log(error, res.GetIsNull(1,1));
-    log(error, res.Nparams());
-    log(error, res.ErrorField(1));
+    let res = conn.Exec("select * from movie1");
+    // log(error, res.Status());
+    assert res.Ok();
+    // log(error, "error msg: " + res.ErrorMessage());
+    assert res.Ntuples() == 3;
+    assert res.Nfields() == 4;
+    // log(error, res.BinaryTuples());
+    // log(error, res.Fname(1));
+    // log(error, res.Ftable(1));
+    // log(error, res.Ftablecol(1));
+    // log(error, res.Fformat(1));
+    // log(error, res.Fsize(1));
+    // log(error, res.Fmod(1));
+    // log(error, "CmdStatus: " + res.CmdStatus());
+    // log(error, res.OidValue());
+    // log(error, res.CmdTuples());
+    // log(error, res.GetValue(1,1));
+    // log(error, res.GetLength(1,1));
+    // log(error, res.GetIsNull(1,1));
+    // log(error, res.Nparams());
+    // log(error, res.ErrorField(1));
+    conn.Exec("drop table if exists movie1");
 }
 
 
