@@ -362,6 +362,11 @@ unsafe fn ResultField2PGdata(res: Result, tup: int,  fld: int) -> PgData {
     }
 }
 
+// enum Field {
+//     Insert(PData),
+//     Ignore(PgData)
+// }
+
 unsafe fn GetRow(res: Result, rownum: int) -> [PgData] {
     if res.Ok() {
         let flds = seq(0, res.Nfields());
@@ -558,11 +563,89 @@ fn UseCase2() {
                                     Int32(1977),
                                     VarChar("lucas")
                                    ]}          
-          NullMovie { log(error, "From title fails") }
+          NullMovie { fail("From title fails") }
         }
     }
     Assure(conn.Exec("drop table if exists movie4"));
 
 }
 
+// -----------------------------------------------------------------------------
 
+// #[test]
+// fn UseCaseInsert() {
+//     enum Movie {
+//         Movie([PgData]),
+//         NullMovie,           
+//     };
+
+//     iface MovieI {        
+//         unsafe fn FromTitle(Conn, str) -> Movie;
+//         fn Insert(Conn) -> Result;
+//         fn Title()->PgData;
+//         fn Year()->PgData;
+//         fn Director()->PgData;
+
+//     }
+
+//     impl MovieI for Movie {        
+//         unsafe fn FromTitle(c: Conn, title: str) -> Movie {
+//             let res = Assure(c.Exec(#fmt("select * from movie5 where title = '%s'", title)));
+//             let row = GetRow(res, 0);
+//             Movie(row)
+//         }
+//         fn Title()->PgData {
+//             alt self {
+//               VarChar(s) {s}
+//               _ {fail("While getting title field of Movie, encountered: " + self.Show())}
+//             }
+//         }
+//         fn Year()->PgData {
+//             alt self {
+//               Int32(n) {#fmt["%d", n]}
+//               _ {fail("While getting Year field of Movie, encountered: " + self.Show())}
+//             }
+//         }
+//         fn Director()->PgData {
+//             alt self {
+//               VarChar(s) {s}
+//               _ {fail("While getting director field of Movie, encountered: " + self.Show())}
+//             }
+//         }
+
+//         fn Insert(c: Conn) {
+//             alt self {
+//               NullMovie { fail("Trying to insert a NullMovie") }
+//               _ {
+//                 c.Exec(#fmt["insert values into movie5 (title, year, director) values (%s, %s, %s)",
+//                             self.Title(), self.Year(), self.Director])
+//               }
+//             }
+//         }
+//     }
+
+//     let conn = TestConnect();
+//     Assure(conn.Exec("drop table if exists movie5"));
+//     Assure(conn.Exec("\
+//                       create table movie5 (\
+//                       did serial,\
+//                       unique(did),\
+//                       title varchar(255),\
+//                       year int,\
+//                       director varchar(255)\
+//                       );"
+//                     ));
+    
+//     InsertStarWars(conn, "movie5");
+//     unsafe {
+//         alt NullMovie.FromTitle(conn, "a new hope") {
+//           Movie(rs) { assert rs == [Int32(1),
+//                                     VarChar("a new hope"),
+//                                     Int32(1977),
+//                                     VarChar("lucas")
+//                                    ]}          
+//           NullMovie { log(error, "From title fails") }
+//         }
+//     }
+//     Assure(conn.Exec("drop table if exists movie5"));
+// }
