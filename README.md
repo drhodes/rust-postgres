@@ -25,7 +25,7 @@ postgres=# <b>CREATE DATABASE rust_test_db;</b>
 
 Here's one of the tests
 -----------------------
-<i>totally up in the air, I'm still learning rust. If you see something obviously brain dead and you care enough, please make an issue and let the berating commence.</i>
+<i>totally up in the air, I'm still learning rust. If you see something obviously brain dead and you care enough, please make an issue.</i>
 
 <pre>
 #[test]
