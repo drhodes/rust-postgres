@@ -23,9 +23,67 @@ postgres=# <b>CREATE DATABASE rust_test_db;</b>
 
 </pre>
 
+Example Usage (totally up in the air, still learning rust. If you see something
+obviously brain dead and you care enough, please make an issue)
+
+<pre>
+fn AlgebraTest() {
+    let conn = TestConnect();
+
+    let person = Table("person", [
+        ("did",    [Unique], SerialM),
+        ("name",   [Insert], VarCharM(255))
+    ]);
+
+    let movie = Table("movie_algebra", [
+        ("did",      [Unique],                                 SerialM),
+        ("title",    [Insert],                                 VarCharM(255)),
+        ("year",     [Insert],                                 Int32M),
+        ("director", [Insert, ForeignKey(copy person, "did")], Int32M )                                                
+    ]);
+
+    // Drop some tables
+    Assure( conn.Exec( DropTable( person)));
+    Assure( conn.Exec( DropTable( movie)));
+
+    // Create some tables
+    Assure( conn.Exec( CreateTable( person)));
+    Assure( conn.Exec( CreateTable( movie)));
+
+    // Test the fancy insert.
+    let q1 = person.Insert( [VarChar("lucas")] );
+    assert q1 == "insert into person (name) VALUES ('lucas')";
+    Assure(conn.Exec(q1));
+
+    // no fancy select yet.                                                                                            
+    // Get the person.did of lucas to test foreign key insert                                                          
+                                                                                                                       
+    unsafe {
+        let res = Assure(conn.Exec("select * from person where name = 'lucas'"));
+        let lucas_did = copy GetRow(res, 0)[0];
+
+        let q2 =  movie.Insert( [VarChar("starwars"), Int32(1977), lucas_did]);
+        assert q2 ==
+            "insert into movie_algebra (title,year,director) VALUES ('starwars',1977,1)";
+        Assure(conn.Exec(q2));
+    }
+</pre>
+
+
+
+
+
 
 Preliminary Results
 -------------------
+
+
+
+
+
+
+
+
 
 If postgres is setup correctly and rustc can find your libpq then you might be 
 able to get the following output
