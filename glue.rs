@@ -218,17 +218,11 @@ fn seq(a: int, b: int) -> [int] {
 }
 
 
-
-
-
-
-
-
-
 // rhodesd> I find it odd that postgres is returning string data (*char)
 // that needs to be converted, instead of binary data.
 
-unsafe fn ResultField2PGdata(res: Result, tup: int,  fld: int) -> PgData {
+#[doc = "Extract PgData field given a Result, and two indexes: tuple and field."]
+unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
     // get the field type
     assert res.Ok(); // todo: this check needs to be gone at some point
     let getrep = {|t,f| unsafe::from_c_str(res.GetValue(t,f))};
@@ -385,9 +379,8 @@ unsafe fn ResultField2PGdata(res: Result, tup: int,  fld: int) -> PgData {
 unsafe fn GetRow(res: Result, rownum: int) -> [PgData] {
     if res.Ok() {
         let flds = seq(0, res.Nfields());
-        let f = {|x|ResultField2PGdata(res, rownum, x)};
-        let rs = vec::map(flds, f);
-        rs
+        let f = {|x|Result2PgData(res, rownum, x)};
+        flds.map(f)
 
     } else {
         [PgDataErr("GetRows fails because ... ")]
@@ -398,8 +391,8 @@ unsafe fn GetAllRows(res: Result) -> [[PgData]] {
     if res.Ok() {
         let tups = seq(0, res.Ntuples());
         let f = {|x|GetRow(res, x)};
-        let rs = vec::map(tups, f);
-        rs
+        tups.map(f)
+
     } else {
         [[PgDataErr("GetAllRows fails because ... ")]]
     }
@@ -455,7 +448,7 @@ enum FieldOption {
     Unique,
 
     // table types here may preclude mutual recursive tables.
-    // meh, we'll do it live. WE'LL DO IT LIVE.
+    // meh, do it live.
     ForeignKey(Table, str), 
 }
 
@@ -475,11 +468,13 @@ enum Table {
     Table(str, [Field]),
 }
 
-iface Insert {
+iface TableI {
     fn Insert(Row) -> str;
+    fn DropTable(conn: Conn) -> Result;
+    fn CreateTable(conn: Conn) -> Result;
 }
 
-impl of Insert for Table {
+impl of TableI for Table {
     fn Insert(r: Row) -> str {
         let mut keepers: [str] = [];
         let Table(tname, flds) = copy self;
@@ -503,44 +498,45 @@ impl of Insert for Table {
              "("+str::connect(keepers, ",")+")",
              "("+str::connect(vals,",")+")"]             
     }    
-}
 
-
-
-fn DropTable(tbl: Table) -> str {
-    let Table(name, _) = copy tbl;
-    #fmt("drop table if exists %s cascade", name)
-}
-
-
-fn CreateTable(tbl: Table) -> str {
-    let Table(name, flds) = copy tbl;
-    let mut q: [str] = [];
-       
-    for flds.each {|fld|
-        let (fname, ops, modt) = copy fld;
-        q += [#fmt["  %s %s", fname, modt.show()]];
-        for ops.each {|op|
-            alt op {
-              Insert {}
-              Select {}
-              Unique { q += [#fmt["  UNIQUE(%s)", fname]]; }
-              ForeignKey(Table(tname, _), ffldname) {
-                if tname == name {
-                    // this detects if the table is self referencing
-                    // still need to work out the accepted error handling.
-                } else {
-                    q += [#fmt["  foreign key (%s) references %s(%s)",
-                              fname, tname, ffldname]];                 
-                }
-              }  
-            }  
-        }       
+    fn DropTable(conn: Conn) -> Result {
+        let Table(name, _) = copy self;
+        let q = #fmt("drop table if exists %s cascade", name);
+        conn.Exec(q)
     }
-    let head = #fmt["create table %s (\n", name];
-    head + str::connect(q, ",\n") + "\n)"
+
+    fn CreateTable(conn: Conn) -> Result {
+        let Table(name, flds) = copy self;
+        let mut q: [str] = [];
+        
+        for flds.each {|fld|
+            let (fname, ops, modt) = copy fld;
+            q += [#fmt["  %s %s", fname, modt.show()]];
+            // for each field option, add the string represenation to query string.
+            for ops.each {|op|
+                alt op {
+                  Insert {}
+                  Select {}
+                  Unique { q += [#fmt["  UNIQUE(%s)", fname]]; }
+                  ForeignKey(Table(tname, _), ffldname) {
+                    if tname == name {
+                        // this detects if the table is self referencing
+                        // still need to work out the accepted error handling.
+                    } else {
+                        q += [#fmt["  foreign key (%s) references %s(%s)",
+                                   fname, tname, ffldname]];                 
+                    }
+                  }  
+                }  
+            }       
+        }
+        let head = #fmt["create table %s (\n", name];
+        let q = head + str::connect(q, ",\n") + "\n)";
+        conn.Exec(q)
+    }
 }
 
+// -----------------------------------------------------------------------------
 
 #[test]
 fn AlgebraTest() {
@@ -559,12 +555,12 @@ fn AlgebraTest() {
     ]);
 
     // Drop some tables
-    Assure( conn.Exec( DropTable( person)));
-    Assure( conn.Exec( DropTable( movie)));
+    Assure( person.DropTable(conn));
+    Assure( movie.DropTable(conn));
 
     // Create some tables
-    Assure( conn.Exec( CreateTable( person)));
-    Assure( conn.Exec( CreateTable( movie)));
+    Assure( person.CreateTable(conn));
+    Assure( movie.CreateTable(conn));
 
     // Test the fancy insert.
     let q1 = person.Insert( [VarChar("lucas")] );
@@ -579,12 +575,12 @@ fn AlgebraTest() {
         let lucas_did = copy GetRow(res, 0)[0];
         
         let q2 =  movie.Insert( [VarChar("starwars"), Int32(1977), lucas_did]);
-        assert q2 ==
-            "insert into movie_algebra (title,year,director) VALUES ('starwars',1977,1)";
+        let q2_ = "insert into movie_algebra (title,year,director) VALUES ('starwars',1977,1)";
+        assert q2 == q2_;
+            
         Assure(conn.Exec(q2));
     }
 }
-
 
 // ------------------------------------------------------------------
 #[test]
@@ -725,83 +721,3 @@ fn UseCase2() {
     Assure(conn.Exec("drop table if exists movie4"));
 
 }
-
-// -----------------------------------------------------------------------------
-
-// #[test]
-// fn UseCaseInsert() {
-//     enum Movie {
-//         Movie([PgData]),
-//         NullMovie,           
-//     };
-
-//     iface MovieI {        
-//         unsafe fn FromTitle(Conn, str) -> Movie;
-//         fn Insert(Conn) -> Result;
-//         fn Title()->PgData;
-//         fn Year()->PgData;
-//         fn Director()->PgData;
-
-//     }
-
-//     impl MovieI for Movie {        
-//         unsafe fn FromTitle(c: Conn, title: str) -> Movie {
-//             let res = Assure(c.Exec(#fmt("select * from movie5 where title = '%s'", title)));
-//             let row = GetRow(res, 0);
-//             Movie(row)
-//         }
-//         fn Title()->PgData {
-//             alt self {
-//               VarChar(s) {s}
-//               _ {fail("While getting title field of Movie, encountered: " + self.Show())}
-//             }
-//         }
-//         fn Year()->PgData {
-//             alt self {
-//               Int32(n) {#fmt["%d", n]}
-//               _ {fail("While getting Year field of Movie, encountered: " + self.Show())}
-//             }
-//         }
-//         fn Director()->PgData {
-//             alt self {
-//               VarChar(s) {s}
-//               _ {fail("While getting director field of Movie, encountered: " + self.Show())}
-//             }
-//         }
-
-//         fn Insert(c: Conn) {
-//             alt self {
-//               NullMovie { fail("Trying to insert a NullMovie") }
-//               _ {
-//                 c.Exec(#fmt["insert values into movie5 (title, year, director) values (%s, %s, %s)",
-//                             self.Title(), self.Year(), self.Director])
-//               }
-//             }
-//         }
-//     }
-
-//     let conn = TestConnect();
-//     Assure(conn.Exec("drop table if exists movie5"));
-//     Assure(conn.Exec("\
-//                       create table movie5 (\
-//                       did serial,\
-//                       unique(did),\
-//                       title varchar(255),\
-//                       year int,\
-//                       director varchar(255)\
-//                       );"
-//                     ));
-    
-//     InsertStarWars(conn, "movie5");
-//     unsafe {
-//         alt NullMovie.FromTitle(conn, "a new hope") {
-//           Movie(rs) { assert rs == [Int32(1),
-//                                     VarChar("a new hope"),
-//                                     Int32(1977),
-//                                     VarChar("lucas")
-//                                    ]}          
-//           NullMovie { log(error, "From title fails") }
-//         }
-//     }
-//     Assure(conn.Exec("drop table if exists movie5"));
-// }
