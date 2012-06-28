@@ -50,6 +50,7 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | character varying [    | varchar [ (n) ]  | variable-length character  |
     // | (n) ]                  |                  | string                     |
+    VarCharM(int), // model
     VarChar(str),
     NullVarChar,
 
@@ -87,6 +88,7 @@ enum PgData {
 
     // |------------------------+------------------+----------------------------|
     // | integer                | int, int4        | signed four-byte integer   |
+    Int32M,
     Int32(i32),
     NullInt32,
 
@@ -131,7 +133,8 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | serial                 | serial4          | autoincrementing four-byte |
     // |                        |                  | integer                    |
-    // Serial(i32),
+    Serial(i32),
+    SerialM,
     // rhodesd> This is just a (rust int32| sql int4)
     // todo: possible to discriminate between the two by inspecting PQresult?
 
@@ -184,21 +187,26 @@ iface Show {
     fn show() -> str;
 }
 
+
 impl of Show for PgData {
     fn show() -> str {
         alt self {
           Int64(n) {#fmt("%d", n as int)} // todo: how to format a i64?
           VarChar(s) {#fmt("'%s'", s)}
           Int32(n) {#fmt("%d", n as int)}
-          _ { "asdf"}
+          VarCharM(n) {#fmt("VARCHAR(%d)", n)}
+          Int32M { "INT4" }
+          SerialM { "SERIAL" }
+          _ {"ASDF"}
+
         }
     }
 }
 
-type Row = [PgData];
 
 // There's got to be a better way. list comprehensions?
 fn seq(a: int, b: int) -> [int] {
+    // haskell? [a .. b] done.
     let mut i = a;
     let mut accum: [int] = [];
     //int::range(a,b,{|x| vec::push(accum, x)});
@@ -208,6 +216,13 @@ fn seq(a: int, b: int) -> [int] {
     }
     accum
 }
+
+
+
+
+
+
+
 
 
 // rhodesd> I find it odd that postgres is returning string data (*char)
@@ -395,7 +410,7 @@ unsafe fn GetAllRows(res: Result) -> [[PgData]] {
 
 fn InsertStarWars(conn: Conn, tablename: str) {
     let insertstr = #fmt("insert into %s (title, year, director) VALUES", tablename);
-    conn.Exec( insertstr + "('a new hope', 1977, 'lucas')");
+    (conn.Exec( insertstr + "('a new hope', 1977, 'lucas')"));
     conn.Exec( insertstr + "('the empire strikes back', 1980, 'Kershner')");
     conn.Exec( insertstr + "('return of the jedi', 1983, 'lucas')");   
 }
@@ -429,6 +444,147 @@ fn GetRowTest() {
     }
     conn.Exec("drop table if exists movie");
 }
+
+// ------------------------------------------------------------------
+
+type Row = [PgData];
+
+enum FieldOption {
+    Insert,
+    Select,
+    Unique,
+
+    // table types here may preclude mutual recursive tables.
+    // meh, we'll do it live. WE'LL DO IT LIVE.
+    ForeignKey(Table, str), 
+}
+
+// enum Field {
+//     Field(str, [FieldOption], PgData)
+//    (str, [FieldOption], PgData)
+// }
+
+type Field = (str, [FieldOption], PgData);
+
+fn InsertFieldP(fld: Field) -> bool {
+    let (_, xs, _) = copy fld;
+    xs.contains(Insert) 
+}
+
+enum Table {
+    Table(str, [Field]),
+}
+
+iface Insert {
+    fn Insert(Row) -> str;
+}
+
+impl of Insert for Table {
+    fn Insert(r: Row) -> str {
+        let mut keepers: [str] = [];
+        let Table(tname, flds) = copy self;
+
+        for flds.each {|x|
+            if InsertFieldP(x) {
+                let (fldname, _, _) = copy x;
+                keepers += [fldname];
+            }
+        }
+        if r.len() != keepers.len() {
+            fail("Table must have the same number of Insert fields as values")
+        }
+
+        let mut vals: [str] = [];
+        for r.each {|fld|
+            vals += [fld.show()];
+        }
+
+        #fmt["insert into %s %s VALUES %s", tname, 
+             "("+str::connect(keepers, ",")+")",
+             "("+str::connect(vals,",")+")"]             
+    }    
+}
+
+
+
+fn DropTable(tbl: Table) -> str {
+    let Table(name, _) = copy tbl;
+    #fmt("drop table if exists %s cascade", name)
+}
+
+
+fn CreateTable(tbl: Table) -> str {
+    let Table(name, flds) = copy tbl;
+    let mut q: [str] = [];
+       
+    for flds.each {|fld|
+        let (fname, ops, modt) = copy fld;
+        q += [#fmt["  %s %s", fname, modt.show()]];
+        for ops.each {|op|
+            alt op {
+              Insert {}
+              Select {}
+              Unique { q += [#fmt["  UNIQUE(%s)", fname]]; }
+              ForeignKey(Table(tname, _), ffldname) {
+                if tname == name {
+                    // this detects if the table is self referencing
+                    // still need to work out the accepted error handling.
+                } else {
+                    q += [#fmt["  foreign key (%s) references %s(%s)",
+                              fname, tname, ffldname]];                 
+                }
+              }  
+            }  
+        }       
+    }
+    let head = #fmt["create table %s (\n", name];
+    head + str::connect(q, ",\n") + "\n)"
+}
+
+
+#[test]
+fn AlgebraTest() {
+    let conn = TestConnect();
+
+    let person = Table("person", [
+        ("did",    [Unique], SerialM),
+        ("name",   [Insert], VarCharM(255))
+    ]);
+    
+    let movie = Table("movie_algebra", [
+        ("did",      [Unique],                                 SerialM),
+        ("title",    [Insert],                                 VarCharM(255)),
+        ("year",     [Insert],                                 Int32M),
+        ("director", [Insert, ForeignKey(copy person, "did")], Int32M )
+    ]);
+
+    // Drop some tables
+    Assure( conn.Exec( DropTable( person)));
+    Assure( conn.Exec( DropTable( movie)));
+
+    // Create some tables
+    Assure( conn.Exec( CreateTable( person)));
+    Assure( conn.Exec( CreateTable( movie)));
+
+    // Test the fancy insert.
+    let q1 = person.Insert( [VarChar("lucas")] );
+    assert q1 == "insert into person (name) VALUES ('lucas')";
+    Assure(conn.Exec(q1));
+
+    // no fancy select yet.
+    // Get the person.did of lucas to test foreign key insert
+
+    unsafe {
+        let res = Assure(conn.Exec("select * from person where name = 'lucas'"));
+        let lucas_did = copy GetRow(res, 0)[0];
+        
+        let q2 =  movie.Insert( [VarChar("starwars"), Int32(1977), lucas_did]);
+        assert q2 ==
+            "insert into movie_algebra (title,year,director) VALUES ('starwars',1977,1)";
+        Assure(conn.Exec(q2));
+    }
+}
+
 
 // ------------------------------------------------------------------
 #[test]
