@@ -253,22 +253,31 @@ impl of Show for PgData {
           // CharM(n) {#fmt("VARCHAR(%d)", n)}
           // Cidr(IP),
           // CidrM
+
           // Date(u8,u8,u8),
           // DateM
+
           // Float32(f32),
           // Float32M,
+
           // Float64(f64),
           // Float64M,
+
           // Inet(IP),
           // InetM,
+
           // Int16(i16),
           // Int16M,
+
           // Int32(i32),
           // Int32M,
+
           // Int64(i64),
           // Int64M,
+
           // MacAddr(u8,u8,u8,u8,u8,u8),
           // MacAddrM,
+
           // NullBigSerial {"NullBigSerial"}
           // NullBit {"NullBit"}
           // NullBool {"NullBool"}
