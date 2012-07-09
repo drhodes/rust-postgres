@@ -246,6 +246,7 @@ impl of Show for PgData {
           //
           Bool(b) { if b == true {"TRUE"} else {"FALSE"}}
           BoolM {"BOOL"}
+
           // ByteA([u8]),
           // ByteAM,
           // Char(str),
@@ -290,7 +291,7 @@ impl of Show for PgData {
           // NullVarBit {"NullVarBit"}
           // NullVarChar {"NullVarChar"}
           // NullXml {"NullXml"}
-          // PgDataErr(str),
+
           // Serial(i32),
           // SerialM,
 
@@ -317,7 +318,7 @@ impl of Show for PgData {
 
 
 
-
+          // PgDataErr(str),
 
           _ {"ASDF"}
 
