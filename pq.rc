@@ -14,9 +14,6 @@ mod glue;
 #[path = "tests/algebra_movie_test.rs"]
 mod algebra_movie_test;
 
-#[path = "tests/bit_test.rs"]
-mod bit_test;
-
 #[path = "tests/facemelt1_test.rs"]
 mod facemelt1_test;
 
@@ -31,5 +28,12 @@ mod get_row_test;
 
 #[path = "tests/test_basic.rs"]
 mod test_basic;
+
+// test data types
+#[path = "tests/bit_test.rs"]
+mod bit_test;
+
+#[path = "tests/bool_test.rs"]
+mod bool_test;
 
 

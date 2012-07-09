@@ -244,8 +244,8 @@ impl of Show for PgData {
           //
           BitM(n) { #fmt("BIT(%d)", n) }
           //
-          //Bool(bool) { 
-          // BoolM,{"BOOL"}
+          Bool(b) { if b == true {"TRUE"} else {"FALSE"}}
+          BoolM {"BOOL"}
           // ByteA([u8]),
           // ByteAM,
           // Char(str),
@@ -348,16 +348,18 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
     
     alt res.Ftype(fld) {
       // -------------------------------------------------------
-      BOOL { 
-        let val = res.GetValue(tup, fld) as *c_int;
-        Bool(
-            // todo: setup a test case for this.
-            alt *val {
-                0 { false }
-                1 { true }
-                _ { fail("Need to figure out how postgres implements bools") }
-            })
+      BOOL {         
+        let s = getrep(tup, fld);
+        alt s {
+          "t" { Bool(true) }
+          "f" { Bool(false) }
+          _ { PgDataErr(#fmt["error: \
+                              Expected (t|f) in the BOOL branch of \
+                              Result2PgData, got `%s`.", s])
+            }         
+        }
       }
+
       // BYTEA {}
       // CHAR {}
       // NAME {}
