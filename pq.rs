@@ -6,6 +6,7 @@ use std;
 import libc::*;
 import io;
 import str::unsafe;
+import result::{result, ok, err};
 
 /*-------------------------------------------------------------------------
 *
@@ -370,8 +371,8 @@ enum Oid {}
 // #endif
 //     #endif   /* LIBPQ_FE_H */
 
-//#[link_name = "pq"]
-native mod pq {
+#[link_name = "pq"]
+extern mod pq {
     // ---------------------------------------------------------------------
     // In fe-connect.c
     // make a new client connection to the backend
@@ -1003,28 +1004,41 @@ class Conn {
     fn ProtocolVersion() -> int {
         pq::PQprotocolVersion(self.conn) as int
     }
-
-    unsafe fn Db() -> str {
-        unsafe::from_c_str(pq::PQdb(self.conn))
+    
+    fn Db() -> str {
+        unsafe {
+            ret unsafe::from_c_str(pq::PQdb(self.conn)); 
+        }
     }
-
-    unsafe fn User() -> str {
-        unsafe::from_c_str(pq::PQuser(self.conn))
+    fn User() -> str {        
+        unsafe {
+            ret unsafe::from_c_str(pq::PQuser(self.conn))
+        }
     }
-    unsafe fn Pass() -> str {
-        unsafe::from_c_str(pq::PQpass(self.conn))
+    fn Pass() -> str {
+        unsafe {
+            ret unsafe::from_c_str(pq::PQpass(self.conn))
+        }
     }
-    unsafe fn Host() -> str {
-        unsafe::from_c_str(pq::PQhost(self.conn))
+    fn Host() -> str {
+        unsafe {
+            ret unsafe::from_c_str(pq::PQhost(self.conn))
+        }
     }
-    unsafe fn Port() -> str {
-        unsafe::from_c_str(pq::PQport(self.conn))
+    fn Port() -> str {
+        unsafe {
+            ret unsafe::from_c_str(pq::PQport(self.conn))
+        }
     }
-    unsafe fn Tty() -> str {
-        unsafe::from_c_str(pq::PQtty(self.conn))
+    fn Tty() -> str {
+        unsafe {
+            ret unsafe::from_c_str(pq::PQtty(self.conn))
+        }
     }
-    unsafe fn Options() -> str {
-        unsafe::from_c_str(pq::PQoptions(self.conn))
+    fn Options() -> str {
+        unsafe {
+            ret unsafe::from_c_str(pq::PQoptions(self.conn))
+        }
     }
 
     // ------------------------------------------------------------------
@@ -1033,10 +1047,10 @@ class Conn {
         let r = str::as_c_str(query, {|x| pq::PQexec(self.conn, x)});
         Result(r)
     }
-}
-
-// ------------------------------------------------------------------
-class Result {
+    }    
+    
+    // ------------------------------------------------------------------
+    class Result {
     let res: *PGresult;
     new(r: *PGresult){
         self.res = r;
@@ -1073,11 +1087,11 @@ class Result {
     }
 
     unsafe fn ErrorField(fieldcode: int) -> str {
-        let err = pq::PQresultErrorField(self.res, fieldcode as c_int);
-        if ptr::is_null(err) {
+        let e = pq::PQresultErrorField(self.res, fieldcode as c_int);
+        if ptr::is_null(e) {
             "No error found"
         } else {
-            unsafe::from_c_str(err)
+            unsafe::from_c_str(e)
         }
     }
 
@@ -1120,6 +1134,8 @@ class Result {
 
     // rhodesd> I'm pretty sure this is an abomination, 
     // but the type system wasn't liking anything I had to say
+    // 
+
     fn Ftype(field_num: int) -> Ftype {
         let oid = pq::PQftype(self.res, field_num as c_int) as c_int;
         alt oid { 
@@ -1254,6 +1270,7 @@ fn Assure(res: Result) -> Result {
     res
 }
 
+/*
 // ------------------------------------------------------------------
 // #[test]
 fn TestConnect() -> Conn {
@@ -1292,7 +1309,6 @@ fn ResultTest() {
                         );"
                       ));
 
-
     let insertstr = "insert into movie1 (title, year, director) VALUES";
     Assure(conn.Exec( insertstr + "('a new hope', 1977, 'lucas')"));
     Assure(conn.Exec( insertstr + "('the empire strikes back', 1980, 'Kershner')"));
@@ -1320,6 +1336,6 @@ fn ResultTest() {
     conn.Exec("drop table if exists movie1");
 }
 
-
 // #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 //  PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
+*/
