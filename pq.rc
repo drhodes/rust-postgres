@@ -7,10 +7,12 @@
 #[crate_type = "lib"];
 
 mod glue;
-//mod pq;
+// mod pq;
 
-//mod bit_test;
+#[path = "tests/test_basic.rs"]
+mod test_basic;
 
+// mod bit_test;
 #[path = "tests/algebra_movie_test.rs"]
 mod algebra_movie_test;
 
@@ -26,14 +28,24 @@ mod get_all_row_test;
 #[path = "tests/get_row_test.rs"]
 mod get_row_test;
 
-#[path = "tests/test_basic.rs"]
-mod test_basic;
 
 // test data types
 #[path = "tests/bit_test.rs"]
 mod bit_test;
 
+#[path = "tests/varbit_test.rs"]
+mod varbit_test;
+
 #[path = "tests/bool_test.rs"]
 mod bool_test;
+
+#[path = "tests/macaddr_test.rs"]
+mod macaddr_test;
+
+#[path = "tests/int64_test.rs"]
+mod int64_test;
+
+#[path = "tests/text_test.rs"]
+mod text_test;
 
 

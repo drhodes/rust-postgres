@@ -7,13 +7,12 @@ enum IP {
     IPv6(u16,u16,u16,u16,u16,u16,u16),
 }
 
-
 #[doc = "PgData are rust representations of postgres data \
          There are three constructors around each postgres type \
            Null: If there is something wrong with a query, Null<Postgres Type> ...
                  need to reconsider this. 
            Model: These have a trailing 'M' and are used to build
-                  Table types that can be conveniently inserted.
+                  Table instances that can be conveniently inserted.
            The other constructors are used by the library to supply well typed
            rust data, so there's no need to run scan functions after a query.
            todo: improve this docstring.
@@ -43,7 +42,7 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | bit varying [ (n) ]    | varbit           | variable-length bit string |
     VarBit([bool]),
-    VarBitM,
+    VarBitM(int),
     NullVarBit,
 
     // |------------------------+------------------+----------------------------|
@@ -162,6 +161,8 @@ enum PgData {
     NullSerial,
     // rhodesd> This is just a (rust int32| sql int4)
     // todo: possible to discriminate between the two by inspecting PQresult?
+    // magic 8 ball says: Not likely.
+
 
     // |------------------------+------------------+----------------------------|
     // | text                   |                  | variable-length character  |
@@ -219,19 +220,21 @@ iface Show {
 }
 
 impl of Show for PgData {
+    
     fn show() -> str {
         alt self {
           Int32(n) {#fmt("%d", n as int)}
           Int32M { "INT4" }
           //
-          Int64(n) {#fmt("%?", n as int)} // todo: how to format a i64?
+          Int64(n) {i64::to_str(n, 10)} // todo: how to format a i64?
+          Int64M { "INT8" }
           //
           SerialM { "SERIAL" }
           //
           VarChar(s) {#fmt("'%s'", s)}
           VarCharM(n) {#fmt("VARCHAR(%d)", n)}
           //
-          BigSerial(n) {#fmt("%?", n)}
+          BigSerial(n) {i64::to_str(n, 10)}
           BigSerialM {
             "BIGSERIAL"
           }
@@ -275,8 +278,20 @@ impl of Show for PgData {
           // Int64(i64),
           // Int64M,
 
-          // MacAddr(u8,u8,u8,u8,u8,u8),
-          // MacAddrM,
+          MacAddr(a,b,c,d,e,f) {
+            #fmt("'%02x:%02x:%02x:%02x:%02x:%02x'", 
+                 a as uint,
+                 b as uint,
+                 c as uint,
+                 d as uint,
+                 e as uint,
+                 f as uint
+                )
+                
+          }
+          MacAddrM {
+            "MACADDR"
+          }
 
           // NullBigSerial {"NullBigSerial"}
           // NullBit {"NullBit"}
@@ -303,9 +318,10 @@ impl of Show for PgData {
 
           // Serial(i32),
           // SerialM,
+         
+          Text(s) {#fmt("'%s'", s)}
+          TextM {"TEXT"}
 
-          // Text(str),
-          // TextM,
 
           // Time(time::tm),
           // TimeM
@@ -318,6 +334,16 @@ impl of Show for PgData {
 
           // VarBit([bool]),
           // VarBitM
+          VarBit(bs) {
+            let bvec = bs.map({|b| if b { "1" } else { "0" }});
+            let bstr = str::connect(bvec, "");
+            #fmt("B'%s'", bstr)
+          }
+
+          //
+          VarBitM(n) { #fmt("VARBIT(%d)", n) }
+
+
 
           // VarChar(str),
           // VarCharM(int), // model
@@ -421,7 +447,7 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
 
       // -------------------------------------------------------
       TEXT {
-        Text(unsafe::from_c_str(res.GetValue(tup, fld)))
+        Text(getrep(tup, fld))
       }
 
       // OID {}
@@ -446,7 +472,15 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
       // UNKNOWN {}
       // CIRCLE {}
       // CASH {}
-      // MACADDR {}
+      MACADDR {
+        let s = getrep(tup, fld);
+        let hexes = str::split_char(s, ':');
+        let ns = hexes.map({|x| 
+            chars2hex(x)
+        });            
+        MacAddr(ns[0], ns[1], ns[2], ns[3], ns[4], ns[5])           
+      }
+
       // INET {}
       // CIDR {}
       // INT4ARRAY {}
@@ -474,7 +508,10 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
         Bit(str::chars(s).map({|x| x == '1'}))
       }
 
-      // VARBIT {}
+      VARBIT {
+        let s = getrep(tup, fld);
+        VarBit(str::chars(s).map({|x| x == '1'}))        
+      }
       // NUMERIC {}
       // REFCURSOR {}
       // REGPROCEDURE {}
@@ -644,3 +681,34 @@ impl of TableI for Table {
 }
 
 
+// util
+fn chars2hex(s: str) -> u8 {
+    let c1 = s[0] as char;
+    let c2 = s[1] as char;
+    16 * char2hex(c1) + char2hex(c2)    
+}
+
+fn char2hex(c: char) -> u8 {
+    alt c {
+      '0' {0}
+      '1' {1}
+      '2' {2}
+      '3' {3}
+      '4' {4}
+      '5' {5}
+      '6' {6}
+      '7' {7}
+      '8' {8}
+      '9' {9}
+      'a' {10}
+      'b' {11}
+      'c' {12}
+      'd' {13}
+      'e' {14}
+      'f' {15}
+      _ { 
+        let msg = #fmt["char2hex must hexdigit char [0-9|a-f], got: %c", c];
+        fail(msg)
+      }
+    }
+}
