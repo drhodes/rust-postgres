@@ -7,10 +7,9 @@
 #[crate_type = "lib"];
 
 mod glue;
-//mod pq;
+// mod pq;
 
-//mod bit_test;
-
+// mod bit_test;
 #[path = "tests/algebra_movie_test.rs"]
 mod algebra_movie_test;
 
@@ -38,5 +37,8 @@ mod varbit_test;
 
 #[path = "tests/bool_test.rs"]
 mod bool_test;
+
+#[path = "tests/macaddr_test.rs"]
+mod macaddr_test;
 
 

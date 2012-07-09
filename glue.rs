@@ -219,6 +219,7 @@ iface Show {
 }
 
 impl of Show for PgData {
+    
     fn show() -> str {
         alt self {
           Int32(n) {#fmt("%d", n as int)}
@@ -275,8 +276,20 @@ impl of Show for PgData {
           // Int64(i64),
           // Int64M,
 
-          // MacAddr(u8,u8,u8,u8,u8,u8),
-          // MacAddrM,
+          MacAddr(a,b,c,d,e,f) {
+            #fmt("'%02x:%02x:%02x:%02x:%02x:%02x'", 
+                 a as uint,
+                 b as uint,
+                 c as uint,
+                 d as uint,
+                 e as uint,
+                 f as uint
+                )
+                
+          }
+          MacAddrM {
+            "MACADDR"
+          }
 
           // NullBigSerial {"NullBigSerial"}
           // NullBit {"NullBit"}
@@ -456,7 +469,15 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
       // UNKNOWN {}
       // CIRCLE {}
       // CASH {}
-      // MACADDR {}
+      MACADDR {
+        let s = getrep(tup, fld);
+        let hexes = str::split_char(s, ':');
+        let ns = hexes.map({|x| 
+            chars2hex(x)
+        });            
+        MacAddr(ns[0], ns[1], ns[2], ns[3], ns[4], ns[5])           
+      }
+
       // INET {}
       // CIDR {}
       // INT4ARRAY {}
@@ -657,3 +678,34 @@ impl of TableI for Table {
 }
 
 
+// util
+fn chars2hex(s: str) -> u8 {
+    let c1 = s[0] as char;
+    let c2 = s[1] as char;
+    16 * char2hex(c1) + char2hex(c2)    
+}
+
+fn char2hex(c: char) -> u8 {
+    alt c {
+      '0' {0}
+      '1' {1}
+      '2' {2}
+      '3' {3}
+      '4' {4}
+      '5' {5}
+      '6' {6}
+      '7' {7}
+      '8' {8}
+      '9' {9}
+      'a' {10}
+      'b' {11}
+      'c' {12}
+      'd' {13}
+      'e' {14}
+      'f' {15}
+      _ { 
+        let msg = #fmt["char2hex must hexdigit char [0-9|a-f], got: %c", c];
+        fail(msg)
+      }
+    }
+}
