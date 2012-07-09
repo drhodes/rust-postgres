@@ -1,4 +1,3 @@
-//import pq;
 import std::time;
 import result::{result, ok, err};
 import libc::*;
@@ -8,34 +7,50 @@ enum IP {
     IPv6(u16,u16,u16,u16,u16,u16,u16),
 }
 
+
+#[doc = "PgData are rust representations of postgres data \
+         There are three constructors around each postgres type \
+           Null: If there is something wrong with a query, Null<Postgres Type> ...
+                 need to reconsider this. 
+           Model: These have a trailing 'M' and are used to build
+                  Table types that can be conveniently inserted.
+           The other constructors are used by the library to supply well typed
+           rust data, so there's no need to run scan functions after a query.
+           todo: improve this docstring.
+         "]
 enum PgData {
     // +------------------------------------------------------------------------+
     // |          Name          |     Aliases      |        Description         |
     // |------------------------+------------------+----------------------------|
     // | bigint                 | int8             | signed eight-byte integer  |
     Int64(i64),
+    Int64M,
     NullInt64,
 
     // |------------------------+------------------+----------------------------|
     // | bigserial              | serial8          | autoincrementing           |
     // |                        |                  | eight-byte integer         |
     BigSerial(i64),
+    BigSerialM,
     NullBigSerial,
 
     // |------------------------+------------------+----------------------------|
     // | bit [ (n) ]            |                  | fixed-length bit string    |
     Bit([bool]),
+    BitM(int),
     NullBit,
 
     // |------------------------+------------------+----------------------------|
     // | bit varying [ (n) ]    | varbit           | variable-length bit string |
     VarBit([bool]),
+    VarBitM,
     NullVarBit,
 
     // |------------------------+------------------+----------------------------|
     // | boolean                | bool             | logical Boolean            |
     // |                        |                  | (true/false)               |
     Bool(bool),
+    BoolM,
     NullBool,
 
     // |------------------------+------------------+----------------------------|
@@ -45,6 +60,7 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | bytea                  |                  | binary data ("byte array") |
     ByteA([u8]),
+    ByteAM,
     NullByteA,
 
     // |------------------------+------------------+----------------------------|
@@ -58,12 +74,14 @@ enum PgData {
     // | character [ (n) ]      | char [ (n) ]     | fixed-length character     |
     // |                        |                  | string                     |
     Char(str),
+    CharM(int),
     NullChar,
 
     // |------------------------+------------------+----------------------------|
     // | cidr                   |                  | IPv4 or IPv6 network       |
     // |                        |                  | address                    |
     Cidr(IP),
+    CidrM,
     NullCidr,
 
     // |------------------------+------------------+----------------------------|
@@ -72,6 +90,7 @@ enum PgData {
     // | date                   |                  | calendar date (year,       |
     // |                        |                  | month, day)                |
     Date(u8,u8,u8),
+    DateM,
     NullDate,
 
     // |------------------------+------------------+----------------------------|
@@ -79,17 +98,19 @@ enum PgData {
     // | double precision       | float8           | floating-point number (8   |
     // |                        |                  | bytes)                     |
     Float64(f64),
+    Float64M,
     NullFloat64,
 
     // |------------------------+------------------+----------------------------|
     // | inet                   |                  | IPv4 or IPv6 host address  |
     Inet(IP),
+    InetM,
     NullInet,
 
     // |------------------------+------------------+----------------------------|
     // | integer                | int, int4        | signed four-byte integer   |
-    Int32M,
     Int32(i32),
+    Int32M,
     NullInt32,
 
     // |------------------------+------------------+----------------------------|
@@ -104,6 +125,7 @@ enum PgData {
     // | macaddr                |                  | MAC (Media Access Control) |
     // |                        |                  | address                    |
     MacAddr(u8,u8,u8,u8,u8,u8),
+    MacAddrM,
     NullMacAddr,
 
     // |------------------------+------------------+----------------------------|
@@ -123,11 +145,13 @@ enum PgData {
     // | real                   | float4           | floating-point number (4   |
     // |                        |                  | bytes)                     |
     Float32(f32),
+    Float32M,
     NullFloat32,
 
     // |------------------------+------------------+----------------------------|
     // | smallint               | int2             | signed two-byte integer    |
     Int16(i16),
+    Int16M,
     NullInt16,
 
     // |------------------------+------------------+----------------------------|
@@ -135,6 +159,7 @@ enum PgData {
     // |                        |                  | integer                    |
     Serial(i32),
     SerialM,
+    NullSerial,
     // rhodesd> This is just a (rust int32| sql int4)
     // todo: possible to discriminate between the two by inspecting PQresult?
 
@@ -142,18 +167,21 @@ enum PgData {
     // | text                   |                  | variable-length character  |
     // |                        |                  | string                     |
     Text(str),
+    TextM,
     NullText,
 
     // |------------------------+------------------+----------------------------|
     // | time [ (p) ] [ without |                  | time of day (no time zone) |
     // | time zone ]            |                  |                            |
     Time(time::tm),
+    TimeM,
     NullTime,
 
     // |------------------------+------------------+----------------------------|
     // | time [ (p) ] with time | timetz           | time of day, including     |
     // | zone                   |                  | time zone                  |
     TimeTz(time::tm),
+    TimeTzM,
     NullTimeTz,
 
     // |------------------------+------------------+----------------------------|
@@ -173,50 +201,139 @@ enum PgData {
     // | uuid                   |                  | universally unique         |
     // |                        |                  | identifier                 |
     Uuid([u8]),
+    UuidM,
     NullUuid,
     // |------------------------+------------------+----------------------------|
     // | xml                    |                  | XML data                   |
 
     Xml([u8]),
+    XmlM,
     NullXml,
     // +------------------------------------------------------------------------+
     PgDataErr(str),
 }
 
+
 iface Show {
     fn show() -> str;
 }
 
-
 impl of Show for PgData {
     fn show() -> str {
         alt self {
-          Int64(n) {#fmt("%d", n as int)} // todo: how to format a i64?
-          VarChar(s) {#fmt("'%s'", s)}
           Int32(n) {#fmt("%d", n as int)}
-          VarCharM(n) {#fmt("VARCHAR(%d)", n)}
           Int32M { "INT4" }
+          //
+          Int64(n) {#fmt("%?", n as int)} // todo: how to format a i64?
+          //
           SerialM { "SERIAL" }
+          //
+          VarChar(s) {#fmt("'%s'", s)}
+          VarCharM(n) {#fmt("VARCHAR(%d)", n)}
+          //
+          BigSerial(n) {#fmt("%?", n)}
+          BigSerialM {
+            "BIGSERIAL"
+          }
+          //
+          Bit(bs) {
+            let bvec = bs.map({|b| if b { "1" } else { "0" }});
+            let bstr = str::connect(bvec, "");
+            #fmt("B'%s'", bstr)
+          }
+          //
+          BitM(n) { #fmt("BIT(%d)", n) }
+          //
+          //Bool(bool) { 
+          // BoolM,{"BOOL"}
+          // ByteA([u8]),
+          // ByteAM,
+          // Char(str),
+          // CharM(n) {#fmt("VARCHAR(%d)", n)}
+          // Cidr(IP),
+          // CidrM
+          // Date(u8,u8,u8),
+          // DateM
+          // Float32(f32),
+          // Float32M,
+          // Float64(f64),
+          // Float64M,
+          // Inet(IP),
+          // InetM,
+          // Int16(i16),
+          // Int16M,
+          // Int32(i32),
+          // Int32M,
+          // Int64(i64),
+          // Int64M,
+          // MacAddr(u8,u8,u8,u8,u8,u8),
+          // MacAddrM,
+          // NullBigSerial {"NullBigSerial"}
+          // NullBit {"NullBit"}
+          // NullBool {"NullBool"}
+          // NullByteA {"NullByteA"}
+          // NullChar {"NullChar"}
+          // NullCidr {"NullCidr"}
+          // NullDate {"NullDate"}
+          // NullFloat32 {"NullFloat32"}
+          // NullFloat64 {"NullFloat64"}
+          // NullInet {"NullInet"}
+          // NullInt16 {"NullInt16"}
+          // NullInt32 {"NullInt32"}
+          // NullInt64 {"NullInt64"}
+          // NullMacAddr {"NullMacAddr"}
+          // NullSerial {"NullSerial"}
+          // NullText {"NullText"}
+          // NullTime {"NullTime"}
+          // NullTimeTz {"NullTimeTz"}
+          // NullUuid {"NullUuid"}
+          // NullVarBit {"NullVarBit"}
+          // NullVarChar {"NullVarChar"}
+          // NullXml {"NullXml"}
+          // PgDataErr(str),
+          // Serial(i32),
+          // SerialM,
+
+          // Text(str),
+          // TextM,
+
+          // Time(time::tm),
+          // TimeM
+
+          // TimeTz(time::tm),
+          // TimeTzM
+
+          // Uuid([u8]),
+          // UuidM,
+
+          // VarBit([bool]),
+          // VarBitM
+
+          // VarChar(str),
+          // VarCharM(int), // model
+
+          // Xml([u8]),
+          // XmlM.
+
+
+
+
+
           _ {"ASDF"}
 
         }
     }
 }
 
-
-// There's got to be a better way. list comprehensions?
 fn seq(a: int, b: int) -> [int] {
-    // haskell? [a .. b] done.
     let mut i = a;
     let mut accum: [int] = [];
-    //int::range(a,b,{|x| vec::push(accum, x)});
     while i < b {
         vec::push(accum, i);
         i += 1;
     }
     accum
 }
-
 
 // rhodesd> I find it odd that postgres is returning string data (*char)
 // that needs to be converted, instead of binary data.
@@ -225,7 +342,9 @@ fn seq(a: int, b: int) -> [int] {
 unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
     // get the field type
     assert res.Ok(); // todo: this check needs to be gone at some point
-    let getrep = {|t,f| unsafe::from_c_str(res.GetValue(t,f))};
+    let getrep = {|t, f|
+        unsafe::from_c_str(res.GetValue(t,f))
+    };
     
     alt res.Ftype(fld) {
       // -------------------------------------------------------
@@ -335,7 +454,14 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
       // TIMESTAMPTZ {}
       // INTERVAL {}
       // TIMETZ {}
+
+      // -------------------------------------------------------
       // BIT {}
+      BIT {
+        let s = getrep(tup, fld);
+        Bit(str::chars(s).map({|x| x == '1'}))
+      }
+
       // VARBIT {}
       // NUMERIC {}
       // REFCURSOR {}
@@ -376,16 +502,20 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
 //     Ignore(PgData)
 // }
 
-unsafe fn GetRow(res: Result, rownum: int) -> [PgData] {
-    if res.Ok() {
-        let flds = seq(0, res.Nfields());
-        let f = {|x|Result2PgData(res, rownum, x)};
-        flds.map(f)
-
-    } else {
-        [PgDataErr("GetRows fails because ... ")]
+fn GetRow(res: Result, rownum: int) -> [PgData] {
+    unsafe {
+        if res.Ok() {
+            let flds = seq(0, res.Nfields());
+            let f = {| x
+                     | Result2PgData(res, rownum, x)};
+            flds.map(f)
+                
+        } else {
+            [PgDataErr("GetRows fails because ... ")]
+        }
     }
 }
+    
 
 unsafe fn GetAllRows(res: Result) -> [[PgData]] {    
     if res.Ok() {
@@ -396,10 +526,7 @@ unsafe fn GetAllRows(res: Result) -> [[PgData]] {
     } else {
         [[PgDataErr("GetAllRows fails because ... ")]]
     }
-
-    
 }
-
 
 fn InsertStarWars(conn: Conn, tablename: str) {
     let insertstr = #fmt("insert into %s (title, year, director) VALUES", tablename);
@@ -407,38 +534,6 @@ fn InsertStarWars(conn: Conn, tablename: str) {
     conn.Exec( insertstr + "('the empire strikes back', 1980, 'Kershner')");
     conn.Exec( insertstr + "('return of the jedi', 1983, 'lucas')");   
 }
-
-
-#[test]
-fn GetRowTest() {
-    let conn = TestConnect();
-
-    Assure(conn.Exec("drop table if exists movie"));
-
-    Assure(conn.Exec("create table movie (\
-                      did serial,\
-                      unique(did),\
-                      title varchar(255),\
-                      year int,\
-                      director varchar(255)\
-                      );"
-                    ));
-
-    InsertStarWars(conn, "movie");
-    let res = Assure(conn.Exec("select * from movie"));
-
-    unsafe {
-        assert GetRow(res, 0) == [
-            Int32(1), 
-            VarChar("a new hope"), 
-            Int32(1977), 
-            VarChar("lucas")
-        ];
-    }
-    conn.Exec("drop table if exists movie");
-}
-
-// ------------------------------------------------------------------
 
 type Row = [PgData];
 
@@ -479,7 +574,7 @@ impl of TableI for Table {
         let mut keepers: [str] = [];
         let Table(tname, flds) = copy self;
 
-        for flds.each {|x|
+        for flds.each |x| {
             if InsertFieldP(x) {
                 let (fldname, _, _) = copy x;
                 keepers += [fldname];
@@ -490,7 +585,7 @@ impl of TableI for Table {
         }
 
         let mut vals: [str] = [];
-        for r.each {|fld|
+        for r.each |fld| {
             vals += [fld.show()];
         }
 
@@ -509,11 +604,11 @@ impl of TableI for Table {
         let Table(name, flds) = copy self;
         let mut q: [str] = [];
         
-        for flds.each {|fld|
+        for flds.each |fld| {
             let (fname, ops, modt) = copy fld;
             q += [#fmt["  %s %s", fname, modt.show()]];
             // for each field option, add the string represenation to query string.
-            for ops.each {|op|
+            for ops.each |op|{
                 alt op {
                   Insert {}
                   Select {}
@@ -536,188 +631,4 @@ impl of TableI for Table {
     }
 }
 
-// -----------------------------------------------------------------------------
 
-#[test]
-fn AlgebraTest() {
-    let conn = TestConnect();
-
-    let person = Table("person", [
-        ("did",    [Unique], SerialM),
-        ("name",   [Insert], VarCharM(255))
-    ]);
-    
-    let movie = Table("movie_algebra", [
-        ("did",      [Unique],                                 SerialM),
-        ("title",    [Insert],                                 VarCharM(255)),
-        ("year",     [Insert],                                 Int32M),
-        ("director", [Insert, ForeignKey(copy person, "did")], Int32M )
-    ]);
-
-    // Drop some tables
-    Assure( person.DropTable(conn));
-    Assure( movie.DropTable(conn));
-
-    // Create some tables
-    Assure( person.CreateTable(conn));
-    Assure( movie.CreateTable(conn));
-
-    // Test the fancy insert.
-    let q1 = person.Insert( [VarChar("lucas")] );
-    assert q1 == "insert into person (name) VALUES ('lucas')";
-    Assure(conn.Exec(q1));
-
-    // no fancy select yet.
-    // Get the person.did of lucas to test foreign key insert
-
-    unsafe {
-        let res = Assure(conn.Exec("select * from person where name = 'lucas'"));
-        let lucas_did = copy GetRow(res, 0)[0];
-        
-        let q2 =  movie.Insert( [VarChar("starwars"), Int32(1977), lucas_did]);
-        let q2_ = "insert into movie_algebra (title,year,director) VALUES ('starwars',1977,1)";
-        assert q2 == q2_;
-            
-        Assure(conn.Exec(q2));
-    }
-}
-
-// ------------------------------------------------------------------
-#[test]
-fn GetAllRowTest() {
-    let conn = TestConnect();
-    Assure(conn.Exec("drop table if exists movie2"));
-    Assure(conn.Exec("create table movie2 (\
-                      did serial,\
-                      unique(did),\
-                      title varchar(255),\
-                      year int,\
-                      director varchar(255)\
-                      );"
-                      ));
-
-    InsertStarWars(conn, "movie2");
-    let res = Assure(conn.Exec("select * from movie2"));
-
-    unsafe {
-        let rows = GetAllRows(res);
-        assert rows == [
-            [Int32(1), 
-             VarChar("a new hope"), 
-             Int32(1977), 
-             VarChar("lucas"),
-            ],
-            [Int32(2), 
-             VarChar("the empire strikes back"), 
-             Int32(1980), 
-             VarChar("Kershner")
-            ],
-            [Int32(3), 
-             VarChar("return of the jedi"), 
-             Int32(1983), 
-             VarChar("lucas")
-            ],            
-        ];
-    }
-    conn.Exec("drop table if exists movie2");
-}
-
-// ------------------------------------------------------------------
-#[test]
-fn UseCase1() {
-    type Movie = {
-        // Maybe there's a way to strengthen the types
-        did: PgData,
-        title: PgData,
-        year: PgData,
-        director: PgData
-            
-    };
-    
-    let conn = TestConnect();
-    Assure(conn.Exec("drop table if exists movie3"));
-    Assure(conn.Exec("\
-                      create table movie3 (\
-                      did serial,\
-                      unique(did),\
-                      title varchar(255),\
-                      year int,\
-                      director varchar(255)\
-                      );"
-                      ));
-
-
-    InsertStarWars(conn, "movie3");
-
-    unsafe fn MovieFromTitle(c: Conn, title: str) -> Movie {
-        let q = #fmt("select * from movie3 where title = '%s'", title);
-        let res = Assure(c.Exec(q));
-        let row = GetRow(res, 0);
-        let mov = { 
-            did:copy row[0],
-            title:copy row[1],
-            year:copy row[2],
-            director:copy row[3]
-        }; 
-        //log(error, mov);
-        ret mov
-
-    }
-    unsafe {
-        assert MovieFromTitle(conn, "a new hope") == {
-            did:Int32(1), 
-            title:VarChar("a new hope"), 
-            year:Int32(1977), 
-            director:VarChar("lucas"),
-        }
-    }
-
-    Assure(conn.Exec("drop table if exists movie3"));
-}
-
-// -----------------------------------------------------------------------------
-#[test]
-fn UseCase2() {
-    enum Movie {
-        Movie([PgData]),
-        NullMovie
-    };
-    
-    iface MovieI {        
-        unsafe fn FromTitle(Conn, str) -> Movie;
-    }
-
-    impl MovieI for Movie {        
-        unsafe fn FromTitle(c: Conn, title: str) -> Movie {
-            let res = Assure(c.Exec(#fmt("select * from movie4 where title = '%s'", title)));
-            let row = GetRow(res, 0);
-            Movie(row)
-        }
-    }
-
-    let conn = TestConnect();
-    Assure(conn.Exec("drop table if exists movie4"));
-    Assure(conn.Exec("\
-                      create table movie4 (\
-                      did serial,\
-                      unique(did),\
-                      title varchar(255),\
-                      year int,\
-                      director varchar(255)\
-                      );"
-                    ));
-    
-    InsertStarWars(conn, "movie4");
-    unsafe {
-        alt NullMovie.FromTitle(conn, "a new hope") {
-          Movie(rs) { assert rs == [Int32(1),
-                                    VarChar("a new hope"),
-                                    Int32(1977),
-                                    VarChar("lucas")
-                                   ]}          
-          NullMovie { fail("From title fails") }
-        }
-    }
-    Assure(conn.Exec("drop table if exists movie4"));
-
-}
