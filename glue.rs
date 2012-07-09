@@ -13,7 +13,7 @@ enum IP {
            Null: If there is something wrong with a query, Null<Postgres Type> ...
                  need to reconsider this. 
            Model: These have a trailing 'M' and are used to build
-                  Table types that can be conveniently inserted.
+                  Table instances that can be conveniently inserted.
            The other constructors are used by the library to supply well typed
            rust data, so there's no need to run scan functions after a query.
            todo: improve this docstring.
@@ -43,7 +43,7 @@ enum PgData {
     // |------------------------+------------------+----------------------------|
     // | bit varying [ (n) ]    | varbit           | variable-length bit string |
     VarBit([bool]),
-    VarBitM,
+    VarBitM(int),
     NullVarBit,
 
     // |------------------------+------------------+----------------------------|
@@ -318,6 +318,16 @@ impl of Show for PgData {
 
           // VarBit([bool]),
           // VarBitM
+          VarBit(bs) {
+            let bvec = bs.map({|b| if b { "1" } else { "0" }});
+            let bstr = str::connect(bvec, "");
+            #fmt("B'%s'", bstr)
+          }
+
+          //
+          VarBitM(n) { #fmt("VARBIT(%d)", n) }
+
+
 
           // VarChar(str),
           // VarCharM(int), // model
@@ -474,7 +484,10 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
         Bit(str::chars(s).map({|x| x == '1'}))
       }
 
-      // VARBIT {}
+      VARBIT {
+        let s = getrep(tup, fld);
+        VarBit(str::chars(s).map({|x| x == '1'}))        
+      }
       // NUMERIC {}
       // REFCURSOR {}
       // REGPROCEDURE {}

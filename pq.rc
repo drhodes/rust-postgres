@@ -33,6 +33,9 @@ mod test_basic;
 #[path = "tests/bit_test.rs"]
 mod bit_test;
 
+#[path = "tests/varbit_test.rs"]
+mod varbit_test;
+
 #[path = "tests/bool_test.rs"]
 mod bool_test;
 
