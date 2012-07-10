@@ -28,7 +28,6 @@ mod get_all_row_test;
 #[path = "tests/get_row_test.rs"]
 mod get_row_test;
 
-
 // test data types
 #[path = "tests/bit_test.rs"]
 mod bit_test;
@@ -47,5 +46,3 @@ mod int64_test;
 
 #[path = "tests/text_test.rs"]
 mod text_test;
-
-
