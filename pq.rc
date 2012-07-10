@@ -12,37 +12,40 @@ mod glue;
 #[path = "tests/test_basic.rs"]
 mod test_basic;
 
-// // mod bit_test;
-// #[path = "tests/algebra_movie_test.rs"]
-// mod algebra_movie_test;
-
-// #[path = "tests/facemelt1_test.rs"]
-// mod facemelt1_test;
-
-// #[path = "tests/facemelt2_test.rs"]
-// mod facemelt2_test;
-
-// #[path = "tests/get_all_row_test.rs"]
-// mod get_all_row_test;
-
-// #[path = "tests/get_row_test.rs"]
-// mod get_row_test;
-
-
-// // test data types
-// #[path = "tests/bit_test.rs"]
 // mod bit_test;
+#[path = "tests/algebra_movie_test.rs"]
+mod algebra_movie_test;
 
-// #[path = "tests/varbit_test.rs"]
-// mod varbit_test;
+#[path = "tests/facemelt1_test.rs"]
+mod facemelt1_test;
 
-// #[path = "tests/bool_test.rs"]
-// mod bool_test;
+#[path = "tests/facemelt2_test.rs"]
+mod facemelt2_test;
 
-// #[path = "tests/macaddr_test.rs"]
-// mod macaddr_test;
+#[path = "tests/get_all_row_test.rs"]
+mod get_all_row_test;
+
+#[path = "tests/get_row_test.rs"]
+mod get_row_test;
+
+
+// test data types
+#[path = "tests/bit_test.rs"]
+mod bit_test;
+
+#[path = "tests/varbit_test.rs"]
+mod varbit_test;
+
+#[path = "tests/bool_test.rs"]
+mod bool_test;
+
+#[path = "tests/macaddr_test.rs"]
+mod macaddr_test;
 
 #[path = "tests/int64_test.rs"]
 mod int64_test;
+
+#[path = "tests/text_test.rs"]
+mod text_test;
 
 

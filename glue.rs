@@ -7,7 +7,6 @@ enum IP {
     IPv6(u16,u16,u16,u16,u16,u16,u16),
 }
 
-
 #[doc = "PgData are rust representations of postgres data \
          There are three constructors around each postgres type \
            Null: If there is something wrong with a query, Null<Postgres Type> ...
@@ -319,9 +318,10 @@ impl of Show for PgData {
 
           // Serial(i32),
           // SerialM,
+         
+          Text(s) {#fmt("'%s'", s)}
+          TextM {"TEXT"}
 
-          // Text(str),
-          // TextM,
 
           // Time(time::tm),
           // TimeM
@@ -447,7 +447,7 @@ unsafe fn Result2PgData(res: Result, tup: int,  fld: int) -> PgData {
 
       // -------------------------------------------------------
       TEXT {
-        Text(unsafe::from_c_str(res.GetValue(tup, fld)))
+        Text(getrep(tup, fld))
       }
 
       // OID {}
