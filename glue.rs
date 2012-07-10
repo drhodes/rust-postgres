@@ -162,6 +162,8 @@ enum PgData {
     NullSerial,
     // rhodesd> This is just a (rust int32| sql int4)
     // todo: possible to discriminate between the two by inspecting PQresult?
+    // magic 8 ball says: Not likely.
+
 
     // |------------------------+------------------+----------------------------|
     // | text                   |                  | variable-length character  |
@@ -225,14 +227,15 @@ impl of Show for PgData {
           Int32(n) {#fmt("%d", n as int)}
           Int32M { "INT4" }
           //
-          Int64(n) {#fmt("%?", n as int)} // todo: how to format a i64?
+          Int64(n) {i64::to_str(n, 10)} // todo: how to format a i64?
+          Int64M { "INT8" }
           //
           SerialM { "SERIAL" }
           //
           VarChar(s) {#fmt("'%s'", s)}
           VarCharM(n) {#fmt("VARCHAR(%d)", n)}
           //
-          BigSerial(n) {#fmt("%?", n)}
+          BigSerial(n) {i64::to_str(n, 10)}
           BigSerialM {
             "BIGSERIAL"
           }
