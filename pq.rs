@@ -22,8 +22,6 @@ import result::{result, ok, err};
 *-------------------------------------------------------------------------
 */
 
-// rhodesd> not sure what to do with these flags... const?
-
 /*
 * Option flags for PQcopyResult
 */
@@ -105,7 +103,8 @@ enum PGPing {
 enum Ftype {
     BOOL = 16,
     BYTEA = 17,
-    CHAR = 18,
+    //CHAR = 18,
+    //CHAR = 1042,
     NAME = 19,
     INT8 = 20,
     INT2 = 21,
@@ -179,6 +178,7 @@ enum Ftype {
     OPAQUE = 2282,
     ANYELEMENT = 2283,
     ANYNONARRAY = 2776,
+    UUID = 2950,
     ANYENUM = 3500,
     FDW_HANDLER = 3115,
     ANYRANGE = 3831,
@@ -1047,10 +1047,11 @@ class Conn {
         let r = str::as_c_str(query, {|x| pq::PQexec(self.conn, x)});
         Result(r)
     }
-    }    
+}
     
-    // ------------------------------------------------------------------
-    class Result {
+    
+// ------------------------------------------------------------------
+class Result {
     let res: *PGresult;
     new(r: *PGresult){
         self.res = r;
@@ -1141,7 +1142,8 @@ class Conn {
         alt oid { 
           16 { BOOL }
           17 { BYTEA }
-          18 { CHAR }
+          //18 { CHAR }
+          //1042 { CHAR }
           19 { NAME }
           20 { INT8 }
           21 { INT2 }
@@ -1215,6 +1217,7 @@ class Conn {
           2282 { OPAQUE }
           2283 { ANYELEMENT }
           2776 { ANYNONARRAY }
+          2950 { UUID }
           3500 { ANYENUM }
           3115 { FDW_HANDLER }
           3831 { ANYRANGE }

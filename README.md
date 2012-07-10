@@ -77,8 +77,6 @@ fn AlgebraTest() {
 
 Preliminary Results
 -------------------
-
-
 If postgres is setup correctly and rustc can find your libpq then you might be 
 able to get the following output
 
@@ -86,54 +84,7 @@ able to get the following output
 
 $ rustc --bin pq.rc --test -W no-old-vecs && ./pq
 
-running 12 tests
-NOTICE:  table "movie2" does not exist, skipping
-NOTICE:  table "movie3" does not exist, skipping
-NOTICE:  CREATE TABLE will create implicit sequence "movie3_did_seq" for serial column "movie3.did"
-NOTICE:  CREATE TABLE will create implicit sequence "movie2_did_seq" for serial column "movie2.did"
-NOTICE:  drop cascades to constraint movie_alg_director_fkey on table movie_alg
-NOTICE:  CREATE TABLE will create implicit sequence "testint64_did_seq" for serial column "testint64.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "testint64_did_key" for table "testint64"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie3_did_key" for table "movie3"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie2_did_key" for table "movie2"
-rust: ~"insert into testint64 (int64field) VALUES (1073741824)"
-NOTICE:  CREATE TABLE will create implicit sequence "person_did_seq" for serial column "person.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "person_did_key" for table "person"
-NOTICE:  CREATE TABLE will create implicit sequence "movie_alg_did_seq" for serial column "movie_alg.did"
-NOTICE:  CREATE TABLE will create implicit sequence "testbit_did_seq" for serial column "testbit.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie_alg_did_key" for table "movie_alg"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "testbit_did_key" for table "testbit"
-test facemelt1_test::FaceMelt1 ... ok
-NOTICE:  table "movie1" does not exist, skipping
-NOTICE:  CREATE TABLE will create implicit sequence "movie1_did_seq" for serial column "movie1.did"
-NOTICE:  table "movie" does not exist, skipping
-NOTICE:  table "movie4" does not exist, skipping
-NOTICE:  CREATE TABLE will create implicit sequence "movie4_did_seq" for serial column "movie4.did"
-NOTICE:  CREATE TABLE will create implicit sequence "movie_did_seq" for serial column "movie.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie1_did_key" for table "movie1"
-NOTICE:  CREATE TABLE will create implicit sequence "testbool_did_seq" for serial column "testbool.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "testbool_did_key" for table "testbool"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie4_did_key" for table "movie4"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "movie_did_key" for table "movie"
-rust: ~"insert into testbool (boolfld) VALUES (TRUE)"
-NOTICE:  CREATE TABLE will create implicit sequence "testtext_did_seq" for serial column "testtext.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "testtext_did_key" for table "testtext"
-test get_all_row_test::GetAllRowTest ... ok
-test bit_test::TestBit ... ok
-test test_basic::ResultTest ... ok
-test int64_test::TestInt64 ... ok
-test bool_test::TestBool ... ok
-test get_row_test::GetRowTest ... ok
-NOTICE:  CREATE TABLE will create implicit sequence "testmacaddr_did_seq" for serial column "testmacaddr.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "testmacaddr_did_key" for table "testmacaddr"
-test text_test::TestText ... ok
-test facemelt2_test::UseCase2 ... ok
-test macaddr_test::TestMacAddr ... ok
-NOTICE:  CREATE TABLE will create implicit sequence "testvarbit_did_seq" for serial column "testvarbit.did"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "testvarbit_did_key" for table "testvarbit"
-test algebra_movie_test::MovieTest ... ok
-test varbit_test::TestVarBit ... ok
-
-result: ok. 12 passed; 0 failed; 0 ignored
+ ...
+ result: ok. 22 passed; 0 failed; 0 ignored
 
 </pre>

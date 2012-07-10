@@ -20,7 +20,6 @@ fn TestBool() {
     ]);
     
     assert q == "insert into testbool (boolfld) VALUES (TRUE)";
-    log(error, q);
     Assure(conn.Exec(q));
 
     // Select
